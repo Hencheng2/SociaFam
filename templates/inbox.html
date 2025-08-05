@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Inbox{% endblock %}
+{% block content %}
+<!-- Redirect Prompt for Unauthenticated Users -->
+{% if not current_user.is_authenticated %}
+    <div class="alert alert-warning text-center" role="alert">
+        Please <a href="{{ url_for('login') }}">log in</a> to view your inbox.
+    </div>
+{% else %}
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-container mb-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message | safe }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Game Invitations -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Game Invitations</h4>
+    </div>
+    <div class="list-group mb-4">
+        {% if game_invitations and game_invitations|length > 0 %}
+            {% for invite in game_invitations %}
+                <div class="list-group-item d-flex align-items-center mb-2 rounded-3 shadow-sm bg-info text-white">
+                    <div class="profile-pic-wrapper me-3">
+                        <i class="fas fa-gamepad fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <p class="mb-0">{{ invite.sender.originalName|default(invite.sender.username) }} invited you to play {{ invite.game_name|capitalize }}</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <form method="POST" action="{{ url_for('accept_game_invite', invitation_id=invite.id) }}">
+                            {{ form.hidden_tag() }}
+                            <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('decline_game_invite', invitation_id=invite.id) }}">
+                            {{ form.hidden_tag() }}
+                            <button type="submit" class="btn btn-danger btn-sm">Decline</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-center text-muted mt-3">No pending game invitations.</p>
+        {% endif %}
+    </div>
+
+    <!-- Conversations -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4>Your Conversations</h4>
+        <a href="{{ url_for('message_member') }}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> Start New Conversation
+        </a>
+    </div>
+    low">
+        <!-- AI Chat Link -->
+        <a href="{{ url_for('ai_chat') }}" class="list-group-item list-group-item-action d-flex align-items-center mb-2 rounded-3 shadow-sm bg-info text-white">
+            <div class="profile-pic-wrapper me-3">
+                <i class="fas fa-robot fa-2x"></i>
+            </div>
+            <div class="flex-grow-1">
+                <p class="mb-0">AI Chat Assistant</p>
+                <small>Get help with your family tree. <span class="text-warning">New Feature</span></small>
+            </div>
+        </a>
+        <!-- Conversations List -->
+        {% if conversations and conversations|length > 0 %}
+            {% for conv in conversations %}
+                <a href="{{ url_for('messages_with', other_user_id=conv.other_user.id) }}" class="list-group-item list-group-item-action d-flex align-items-center mb-2 rounded-3 shadow-sm {% if conv.is_unread %}list-group-item-primary{% else %}bg-light{% endif %}">
+                    <div class="profile-pic-wrapper me-3">
+                        <img src="{% if conv.other_user.profilePhoto %}{{ url_for('static', filename='img/profile_photos/' + conv.other_user.profilePhoto) }}{% else %}{{ url_for('static', filename='img/default_profile.png') }}{% endif %}" alt="{{ conv.other_user.originalName|default(conv.other_user.username) }}'s Photo" class="img-fluid rounded-circle" style="width: 50px; height: 50px;">
+                    </div>
+                    <div class="flex-grow-1">
+                        <p class="mb-0">{{ conv.other_user.originalName|default(conv.other_user.username) }}</p>
+                        <small>{{ conv.latest_message_snippet }}</small>
+                    </div>
+                    <div class="d-flex flex-column align-items-end">
+                        <small>{{ moment(conv.timestamp).fromNow() }}</small>
+                        {% if conv.is_unread %}
+                            <span class="badge bg-danger rounded-pill">New</span>
+                        {% endif %}
+                    </div>
+                </a>
+            {% endfor %}
+        {% else %}
+            <p class="text-center text-muted mt-3">No conversations yet. Start a new one!</p>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %} 
