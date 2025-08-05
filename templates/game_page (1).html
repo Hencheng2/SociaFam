@@ -1,0 +1,107 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>{% extends "base.html" %}
+
+{% block title %}Game Library{% endblock %}
+
+{% block content %}
+<style>
+    .fixed-top.header {
+        top: 56px; /* Account for navbar height */
+    }
+</style>
+
+<!-- Fixed Top Header -->
+<div class="container-fluid bg-light py-3 shadow-sm fixed-top header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb justify-content-center mb-2">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Game Library</li>
+        </ol>
+    </nav>
+    <h2 class="mb-4 text-center">Game Library</h2>
+    <p class="text-center text-muted">Choose a game to play with friends.</p>
+</div>
+
+<!-- Games Section -->
+<div class="container mt-4" style="padding-top: 100px;">
+    {% if not current_user.is_authenticated %}
+        <div class="alert alert-warning text-center" role="alert">
+            Please <a href="{{ url_for('login') }}">log in</a> to access the game library.
+        </div>
+    {% else %}
+        <div class="row justify-content-center">
+            <!-- Racing Game -->
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm">
+                    <img src="{{ url_for('static', filename='img/racing_game.jpg') }}" class="card-img-top" alt="Racing Game Image">
+                    <div class="card-body">
+                        <h4 class="card-title text-center">Racing Game</h4>
+                        <p class="card-text">Experience the thrill of high-speed racing. Compete against others or challenge yourself on various tracks.</p>
+                        <a href="{{ url_for('racing_game') }}" class="btn btn-primary">Play Racing Game</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Chess -->
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm">
+                    <img src="{{ url_for('static', filename='img/chess.jpg') }}" class="card-img-top" alt="Chess Image">
+                    <div class="card-body">
+                        <h4 class="card-title text-center">Chess</h4>
+                        <p class="card-text">A timeless game of strategy and tactics. Compete against a friend or the computer to checkmate your opponent’s king.</p>
+                        <a href="{{ url_for('solo_chess') }}" class="btn btn-primary">Play Chess (Solo AI)</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Board Games -->
+            <div class="col-md-4 mb-4">
+                <div class="card shadow-sm">
+                    <img src="{{ url_for('static', filename='img/board_games.jpg') }}" class="card-img-top" alt="Board Games Image">
+                    <div class="card-body">
+                        <h4 class="card-title text-center">Board Games</h4>
+                        <p class="card-text">A collection of various classic and modern board games for you and your family to enjoy together.</p>
+                        <a href="{{ url_for('board_games') }}" class="btn btn-primary">Play Board Games</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
