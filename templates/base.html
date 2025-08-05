@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SociaFam{% endblock %}</title>
+    <!-- Bootstrap 5.3.0 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6.0.0-beta3 -->
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <!-- Moment.js for date/time formatting -->
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <!-- jQuery for DOM manipulation -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <!-- React, ReactDOM, and Babel for chat modal -->
+    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.20.6/babel.min.js"></script>
+    <!-- Firebase SDK for authentication and Firestore -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+    <style>
+        :root {
+            --primary-bg: #ffffff;
+            --secondary-bg: #f8f9fa;
+            --text-color: #333333;
+            --primary-color: #007bff;
+            --navbar-bg: #343a40;
+            --footer-bg: #343a40;
+            --link-color: #ffffff;
+        }
+        [data-theme="dark"] {
+            --primary-bg: #212529;
+            --secondary-bg: #343a40;
+            --text-color: #e9ecef;
+            --primary-color: #0d6efd;
+            --navbar-bg: #1a1d20;
+            --footer-bg: #1a1d20;
+            --link-color: #adb5bd;
+        }
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+        }
+        .navbar, .footer {
+            background-color: var(--navbar-bg);
+        }
+        .navbar-nav .nav-link {
+            color: var(--link-color) !important;
+        }
+        .footer a {
+            color: var(--link-color);
+        }
+        .flash-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        .mobile-footer {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-footer {
+                display: flex;
+                background-color: var(--footer-bg);
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                justify-content: space-around;
+                padding: 10px 0;
+            }
+            .mobile-footer a {
+                color: var(--link-color);
+                text-align: center;
+            }
+        }
+        .chat-modal .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .user-message {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 15px 15px 0 15px;
+            margin-left: 20%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .ai-message {
+            background-color: var(--secondary-bg);
+            color: var(--text-color);
+            border-radius: 15px 15px 15px 0;
+            margin-right: 20%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .loading-indicator {
+            text-align: center;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Fixed Navigation Bar -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white" href="{{ url_for('index') }}">SociaFam</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('inbox') }}">
+                            Inbox
+                            {% if current_user.is_authenticated and unread_count > 0 %}
+                                <span class="badge bg-danger">{{ unread_count }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('members_list') }}">Members</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('status_feed') }}">Status</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('games_hub') }}">Games</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('settings') }}">Settings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('my_profile') }}">Profile</a>
+                    </li>
+                    {% if current_user.is_authenticated and current_user.is_admin %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_manage_users') }}">Admin Panel</a>
+                        </li>
+                    {% endif %}
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+                        </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aiChatModal">
+                            <i class="fas fa-robot"></i> AI Chat
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} flash-message" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="container my-5">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Fixed Footer -->
+    <footer class="footer text-white text-center py-3">
+        <p>&copy; 2025 SociaFam. All rights reserved.</p>
+    </footer>
+
+    <!-- Mobile Footer Navigation -->
+    <div class="mobile-footer">
+        <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a>
+        <a href="{{ url_for('inbox') }}">
+            <i class="fas fa-envelope"></i> Inbox
+            {% if current_user.is_authenticated and unread_count > 0 %}
+                <span class="badge bg-danger">{{ unread_count }}</span>
+            {% endif %}
+        </a>
+        <a href="{{ url_for('games_hub') }}"><i class="fas fa-gamepad"></i> Games</a>
+        <a href="{{ url_for('my_profile') }}"><i class="fas fa-user"></i> Profile</a>
+    </div>
+
+    <!-- AI Chat Modal -->
+    <div class="modal fade" id="aiChatModal" tabindex="-1" aria-labelledby="aiChatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aiChatModalLabel">AI Chat</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="chat-container"></div>
+                </div>
+                <div class="modal-footer">
+                    <input type="text" id="chat-input" class="form-control" placeholder="Type your message...">
+                    <button type="button" id="send-message" class="btn btn-primary">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript for Flash Messages and Chat -->
+    <script>
+        // Auto-hide flash messages after 4 seconds
+        $(document).ready(function() {
+            setTimeout(function() {
+                $('.flash-message').fadeOut('slow');
+            }, 4000);
+        });
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            // Replace with your Firebase config from static/js/config.js
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // React Component for Chat
+        const Chat = () => {
+            const [messages, setMessages] = React.useState([]);
+            const [user, setUser] = React.useState(null);
+            const [loading, setLoading] = React.useState(false);
+
+            // Firebase Auth State Listener
+            React.useEffect(() => {
+                firebase.auth().onAuthStateChanged((currentUser) => {
+                    setUser(currentUser);
+                    if (currentUser) {
+                        // Fetch messages from Firestore
+                        const db = firebase.firestore();
+                        db.collection('chats').doc(currentUser.uid).collection('messages')
+                            .orderBy('timestamp')
+                            .onSnapshot((snapshot) => {
+                                const fetchedMessages = snapshot.docs.map(doc => doc.data());
+                                setMessages(fetchedMessages);
+                            });
+                    }
+                });
+            }, []);
+
+            const sendMessage = async () => {
+                if (!user) {
+                    alert('Please log in to use the chat.');
+                    return;
+                }
+                const input = document.getElementById('chat-input');
+                const message = input.value.trim();
+                if (!message) return;
+
+                setLoading(true);
+                const db = firebase.firestore();
+                await db.collection('chats').doc(user.uid).collection('messages').add({
+                    text: message,
+                    sender: 'user',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                // Simulate AI response (replace with actual AI API call)
+                setTimeout(async () => {
+                    await db.collection('chats').doc(user.uid).collection('messages').add({
+                        text: 'This is a sample AI response.',
+                        sender: 'ai',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    setLoading(false);
+                    input.value = '';
+                }, 1000);
+            };
+
+            return (
+                <div>
+                    {user ? (
+                        <div>
+                            {messages.map((msg, index) => (
+                                <div key={index} className={msg.sender === 'user' ? 'user-message' : 'ai-message'}>
+                                    <p>{msg.text}</p>
+                                    <small>{moment(msg.timestamp?.toDate()).format('MMM D, YYYY h:mm A')}</small>
+                                </div>
+                            ))}
+                            {loading && <div className="loading-indicator">Loading...</div>}
+                        </div>
+                    ) : (
+                        <p>Please log in to use the AI chat.</p>
+                    )}
+                </div>
+            );
+        };
+
+        // Render React Chat Component
+        ReactDOM.render(<Chat />, document.getElementById('chat-container'));
+
+        // Handle Send Message Button
+        document.getElementById('send-message').addEventListener('click', () => {
+            Chat.sendMessage();
+        });
+
+        // Handle Enter Key for Sending Message
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') Chat.sendMessage();
+        });
+
+        // Theme Toggle (client-side)
+        document.getElementById('theme-toggle')?.addEventListener('click', () => {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            body.setAttribute('data-theme', currentTheme === 'light' ? 'dark' : 'light');
+        });
+    </script>
+    <!-- Bootstrap 5.3.0 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
