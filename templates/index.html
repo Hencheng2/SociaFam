@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    {% if current_user.is_authenticated %}
+        <!-- Authenticated User Content -->
+        <h1>Welcome, {{ current_user.username }}!</h1>
+        <p class="lead">Explore your social network and connect with your friends.</p>
+        {% if member %}
+            <p>Your profile: {{ member.fullName }}.</p>
+        {% endif %}
+  
+    {% else %}
+        <!-- Unauthenticated User Content -->
+        <h1>Welcome to SociaFam!</h1>
+        <p class="lead">Join our community to connect with friends and enjoy games.</p>
+    {% endif %}
+</div>
+{% endblock %}
