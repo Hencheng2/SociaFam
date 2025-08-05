@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <h2 class="card-title mb-4">Login</h2>
+                    <form method="POST" action="{{ url_for('login') }}" id="login-form">
+                        {{ form.hidden_tag() }}
+                        <div class="form-group mb-3">
+                            <label for="username" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="username" name="username" required aria-describedby="usernameHelp">
+                            <div id="usernameHelp" class="form-text">Enter your username.</div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="form-group mb-3 form-check text-start">
+                            <input type="checkbox" class="form-check-input" id="is_admin" name="is_admin">
+                            <label class="form-check-label" for="is_admin">Login as Admin</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Login</button>
+                    </form>
+                    <div class="mt-3">
+                        <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+                        <p><a href="#" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Forgot Password?</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="forgotPasswordModalLabel">Forgot Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('forgot_password') }}" id="forgot-password-form">
+                    {{ form.hidden_tag() }}
+                    <div class="form-group mb-3">
+                        <label for="forgot_username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="forgot_username" name="forgot_username" required aria-describedby="forgotUsernameHelp">
+                        <div id="forgotUsernameHelp" class="form-text">Enter your username.</div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="unique_key" class="form-label">Unique Key</label>
+                        <input type="text" class="form-control" id="unique_key" name="unique_key" required aria-describedby="uniqueKeyHelp">
+                        <div id="uniqueKeyHelp" class="form-text">Enter the unique key provided during registration.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="forgot-password-form" class="btn btn-primary">Submit Request</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Client-side form validation
+    document.getElementById('login-form').addEventListener('submit', function(event) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value.trim();
+        if (!username || !password) {
+            event.preventDefault();
+            alert('Please fill in both username and password.');
+        }
+    });
+
+    document.getElementById('forgot-password-form').addEventListener('submit', function(event) {
+        const username = document.getElementById('forgot_username').value.trim();
+        const uniqueKey = document.getElementById('unique_key').value.trim();
+        if (!username || !uniqueKey) {
+            event.preventDefault();
+            alert('Please fill in both username and unique key.');
+        }
+    });
+</script>
+{% endblock %}
