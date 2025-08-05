@@ -1,0 +1,142 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<style>
+    .fixed-top.header {
+        top: 56px; /* Account for navbar height */
+    }
+    .fixed-bottom-settings {
+        position: fixed;
+        bottom: 60px; /* Adjust based on footer height */
+        z-index: 1000;
+    }
+</style>
+
+<!-- Fixed Top Container -->
+<div class="container-fluid bg-light py-3 shadow-sm fixed-top header">
+    <div class="d-flex align-items-center justify-content-between">
+        <div></div> <!-- Empty div for flexbox balancing -->
+        <h2 class="mb-0 text-center">Account Settings</h2>
+        <div class="form-check form-switch ms-auto">
+            <input class="form-check-input" type="checkbox" id="darkModeSwitch" aria-label="Toggle Dark Mode">
+            <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>
+        </div>
+    </div>
+</div>
+
+<!-- Scrollable Content -->
+<div class="container mt-4" style="padding-top: 80px;">
+    {% if not current_user.is_authenticated %}
+        <div class="alert alert-warning text-center" role="alert">
+            Please <a href="{{ url_for('login') }}">log in</a> to access your settings.
+        </div>
+    {% else %}
+        <!-- Chat Background Section -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title">Chat Background</h4>
+                <div class="text-center">
+                    <img src="{% if g.user_chat_background %}{{ url_for('static', filename=g.user_chat_background) }}{% else %}{{ url_for('static', filename='img/default_background.jpg') }}{% endif %}" alt="Current Chat Background" class="img-fluid rounded mb-3" style="max-height: 200px;">
+                    <img src="{% if profile_photo_path %}{{ url_for('static', filename=profile_photo_path) }}{% else %}{{ url_for('static', filename='img/default_profile.png') }}{% endif %}" alt="Profile Photo" class="img-fluid rounded-circle mb-3" style="width: 50px; height: 50px;">
+                </div>
+                <form method="POST" action="{{ url_for('upload_chat_background') }}" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+                    <div class="mb-3">
+                        <label for="background_image" class="form-label">Upload New Background</label>
+                        <input type="file" class="form-control" id="background_image" name="background_image" accept="image/png,image/jpeg,image/gif" aria-describedby="backgroundHelp">
+                        <div id="backgroundHelp" class="form-text">Max file size 5MB. Supported: PNG, JPG, JPEG, GIF.</div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Upload & Set</button>
+                        <a href="{{ url_for('use_profile_photo_as_background') }}" class="btn btn-secondary">Use Profile Photo as Background</a>
+                    </div>
+                </form>
+                <form method="POST" action="{{ url_for('clear_chat_background') }}" class="mt-3">
+                    {{ form.hidden_tag() }}
+                    <button type="submit" class="btn btn-danger">Clear Background</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Account Actions Section -->
+        <div class="card mt-5 mb-5 shadow-sm">
+            <div class="card-body">
+                <h4 class="card-title">Account Actions</h4>
+                <div class="d-flex flex-column gap-2">
+                    <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">Edit My Details</a>
+                    <a href="{{ url_for('change_password') }}" class="btn btn-primary">Change Password</a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Fixed Bottom Container -->
+<div class="container-fluid bg-light py-3 shadow-sm fixed-bottom-settings"></div>
+
+<script>
+    // Dark Mode Toggle
+    document.getElementById('darkModeSwitch').addEventListener('change', function() {
+        document.body.classList.toggle('dark-mode', this.checked);
+        localStorage.setItem('darkMode', this.checked);
+    });
+
+    // Initialize dark mode from localStorage
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.getElementById('darkModeSwitch').checked = true;
+        document.body.classList.add('dark-mode');
+    }
+
+    // Position fixed-bottom container above footer
+    window.addEventListener('load', function() {
+        const footer = document.querySelector('footer');
+        const fixedBottom = document.querySelector('.fixed-bottom-settings');
+        if (footer && fixedBottom) {
+            const footerHeight = footer.offsetHeight;
+            fixedBottom.style.bottom = `${footerHeight}px`;
+        }
+    });
+</script>
+{% endblock %}
