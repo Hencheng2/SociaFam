@@ -1,0 +1,137 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>{% extends "base.html" %}
+
+{% block title %}
+    {% if current_user.id == member.id %}
+        My Profile
+    {% else %}
+        {{ member.fullName }} Profile
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<style>
+    .fixed-top.header {
+        top: 56px; /* Account for navbar height */
+    }
+</style>
+
+<!-- Fixed Header Container -->
+<div class="container-fluid bg-light py-3 shadow-sm fixed-top header">
+    <img src="{% if member.profilePhoto %}{{ url_for('static', filename='img/profile_photos/' + member.profilePhoto) }}{% else %}{{ url_for('static', filename='img/default_profile.png') }}{% endif %}" alt="{% if member.fullName %}{{ member.fullName }} Profile Photo{% else %}Default Profile Photo{% endif %}" class="img-fluid rounded-circle mx-auto d-block mb-3" style="width: 150px; height: 150px;">
+    <h3 class="mb-0 text-center">{{ member.fullName }}</h3>
+    <h4 class="text-muted mb-0 text-center">
+        {% if current_user.id == member.id %}
+            My Profile
+        {% else %}
+            {{ member.fullName }} Profile
+        {% endif %}
+    </h4>
+</div>
+
+<!-- Scrollable Content Container -->
+<div class="container mt-4" style="padding-top: 220px;">
+    {% if not current_user.is_authenticated %}
+        <div class="alert alert-warning text-center" role="alert">
+            Please <a href="{{ url_for('login') }}">log in</a> to view your profile.
+        </div>
+    {% else %}
+        <!-- Profile Details -->
+        <div class="card">
+            <div class="card-body">
+                {% set pronoun_subject = 'He' if member.gender == 'Male' else 'She' if member.gender == 'Female' else 'They' %}
+                {% set pronoun_possessive = 'His' if member.gender == 'Male' else 'Her' if member.gender == 'Female' else 'Their' %}
+                {% set pronoun_object = 'him' if member.gender == 'Male' else 'her' if member.gender == 'Female' else 'them' %}
+
+                <p>{{ member.fullName }} is a {{ member.association | lower }}.</p>
+
+                {% if member.gender %}
+                    <p>{{ pronoun_subject }} is {{ member.maritalStatus | lower }}.</p>
+                {% else %}
+                    <p>This member is {{ member.maritalStatus | lower }}.</p>
+                {% endif %}
+
+                {% if member.spouseNames and member.spouseNames|trim %}
+                    {% set spouse_name = member.spouseNames %}
+                    {% if member.maritalStatus == 'Engaged' %}
+                        <p>{{ pronoun_possessive }} {{ 'girlfriend' if member.gender == 'Male' else 'boyfriend' if member.gender == 'Female' else 'fiance(e)' }} is {{ spouse_name }}.</p>
+                    {% elif member.maritalStatus == 'Married' %}
+                        <p>{{ pronoun_possessive }} {{ 'wife' if member.gender == 'Male' else 'husband' if member.gender == 'Female' else 'spouse(s)' }} include {{ spouse_name }}.</p>
+                    {% endif %}
+                {% endif %}
+
+                {% if member.childrenNames and member.childrenNames|trim %}
+                    <p>{{ pronoun_subject }} {{ 'has' if pronoun_subject in ['He', 'She'] else 'have' }} children:</p>
+                    <ul class="list-unstyled">
+                        {% for child in member.childrenNames.split(',') %}
+                            {% if child|trim %}
+                                <li>{{ child|trim }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                {% if member.dateOfBirth %}
+                    <p>Born on {{ member.dateOfBirth }}.</p>
+                {% endif %}
+
+                {% if member.schoolName %}
+                    <p>{{ pronoun_subject }} attends/attended {{ member.schoolName }}.</p>
+                {% endif %}
+
+                {% if member.whereabouts %}
+                    <p>Currently residing in {{ member.whereabouts }}.</p>
+                {% endif %}
+
+                {% if member.contact %}
+                    <p>
+                        {% if current_user.id == member.id %}
+                            You can be reached at {{ member.contact }}.
+                        {% else %}
+                            {{ pronoun_subject }} can be reached at {{ member.contact }}.
+                        {% endif %}
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
