@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Chess Game{% endblock %}
+
+{% block content %}
+<style>
+    #board {
+        width: 400px;
+        height: 400px;
+        margin: 0 auto;
+        border: 2px solid #333;
+    }
+</style>
+
+<div class="container mt-5">
+    {% if not current_user.is_authenticated %}
+        <div class="alert alert-warning text-center" role="alert">
+            Please <a href="{{ url_for('login') }}">log in</a> to play chess.
+        </div>
+    {% else %}
+        <!-- Game Information Container -->
+        <div class="d-flex justify-content-between mt-4">
+            <span class="badge bg-light text-dark">White Captures: <span id="white-captures">0</span></span>
+            <span class="badge bg-primary" id="turn-indicator">White's Turn</span>
+            <span class="badge bg-light text-dark">Black Captures: <span id="black-captures">0</span></span>
+        </div>
+
+        <!-- Chessboard Container -->
+        <h1 class="text-center mb-4">Chess Game</h1>
+        <div class="text-center">
+            <div id="board" class="mx-auto" role="grid" aria-label="Chessboard"></div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="mt-3 text-center">
+            <button class="btn btn-warning" id="reset-game">Reset Game</button>
+            <a href="{{ url_for('game_page') }}" class="btn btn-secondary">Back to Library</a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pawn Promotion Modal -->
+<div class="modal fade" id="promotion-modal" tabindex="-1" aria-labelledby="promotionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="promotionModalLabel">Pawn Promotion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Choose a piece to promote your pawn to:</p>
+                <div class="text-center">
+                    <button class="btn btn-outline-dark mx-2" data-piece="queen">Queen ♕</button>
+                    <button class="btn btn-outline-dark mx-2" data-piece="rook">Rook ♖</button>
+                    <button class="btn btn-outline-dark mx-2" data-piece="bishop">Bishop ♗</button>
+                    <button class="btn btn-outline-dark mx-2" data-piece="knight">Knight ♘</button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="confirm-promotion">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/chess.js') }}"></script>
+<script src="{{ url_for('static', filename='js/stockfish.js') }}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (!{{ current_user.is_authenticated | tojson }}) return;
+
+        const boardElement = document.getElementById('board');
+        const game = new Chess();
+        const stockfish = new Worker("{{ url_for('static', filename='js/stockfish.js') }}");
+        let selectedSquare = null;
+        let pendingPromotion = null;
+
+        const boardConfig = {
+            position: 'start',
+            onDrop: onDrop,
+            onSnapEnd: onSnapEnd
+        };
+        const board = Chessboard('board', boardConfig);
+
+        function updateStatus() {
+            const whiteCaptures = game.history().filter(move => move.captured && game.turn() === 'b').length;
+            const blackCaptures = game.history().filter(move => move.captured && game.turn() === 'w').length;
+            document.getElementById('white-captures').textContent = whiteCaptures;
+            document.getElementById('black-captures').textContent = blackCaptures;
+            document.getElementById('turn-indicator').textContent = game.turn() === 'w' ? "White's Turn" : "Black's Turn";
+        }
+
+        function onDrop(source, target) {
+            // Handle click-based move by checking if a piece was selected
+            if (selectedSquare && source !== target) {
+                const move = game.move({
+                    from: selectedSquare,
+                    to: target,
+                    promotion: 'q' // Default, updated if promoted
+                });
+
+                if (move === null) {
+                    board.position(game.fen());
+                    selectedSquare = null;
+                    return 'snapback';
+                }
+
+                if (move.flags.includes('p')) {
+                    pendingPromotion = { from: selectedSquare, to: target };
+                    new bootstrap.Modal(document.getElementById('promotion-modal')).show();
+                    selectedSquare = null;
+                    return;
+                }
+
+                updateStatus();
+                selectedSquare = null;
+                setTimeout(makeAIMove, 250);
+            }
+        }
+
+        function onSnapEnd() {
+            board.position(game.fen());
+        }
+
+        // Handle click to select/deselect pieces
+        boardElement.addEventListener('click', function(e) {
+            const square = e.target.getAttribute('data-square');
+            if (!square) return;
+
+            if (!selectedSquare && game.get(square) && game.turn() === (game.get(square).color === 'w' ? 'w' : 'b')) {
+                selectedSquare = square;
+                // Highlight selected square (optional visual feedback)
+                boardElement.querySelector(`[data-square="${square}"]`).classList.add('highlight');
+            } else if (selectedSquare) {
+                // Attempt to move to the clicked square
+                const move = game.move({
+                    from: selectedSquare,
+                    to: square,
+                    promotion: 'q' // Default
+                });
+
+                if (move === null) {
+                    board.position(game.fen());
+                    selectedSquare = null;
+                    boardElement.querySelector(`[data-square="${selectedSquare}"]`)?.classList.remove('highlight');
+                    return;
+                }
+
+                if (move.flags.includes('p')) {
+                    pendingPromotion = { from: selectedSquare, to: square };
+                    new bootstrap.Modal(document.getElementById('promotion-modal')).show();
+                    selectedSquare = null;
+                    return;
+                }
+
+                updateStatus();
+                selectedSquare = null;
+                boardElement.querySelector(`[data-square="${square}"]`)?.classList.remove('highlight');
+                setTimeout(makeAIMove, 250);
+            }
+        });
+
+        document.querySelectorAll('[data-piece]').forEach(button => {
+            button.addEventListener('click', function() {
+                const piece = this.getAttribute('data-piece');
+                game.undo();
+                game.move({
+                    from: pendingPromotion.from,
+                    to: pendingPromotion.to,
+                    promotion: piece[0]
+                });
+                board.position(game.fen());
+                updateStatus();
+                pendingPromotion = null;
+                document.getElementById('confirm-promotion').click(); // Close modal
+            });
+        });
+
+        function makeAIMove() {
+            stockfish.postMessage('position fen ' + game.fen());
+            stockfish.postMessage('go movetime 1000');
+            stockfish.onmessage = function(event) {
+                const message = event.data;
+                if (message.startsWith('bestmove')) {
+                    const bestMove = message.split(' ')[1];
+                    game.move({ from: bestMove.slice(0, 2), to: bestMove.slice(2, 4), promotion: bestMove[4] || 'q' });
+                    board.position(game.fen());
+                    updateStatus();
+                }
+            };
+        }
+
+        document.getElementById('reset-game').addEventListener('click', function() {
+            game.reset();
+            board.position('start');
+            updateStatus();
+        });
+
+        updateStatus();
+    });
+</script>
+{% endblock %}
