@@ -31,8 +31,8 @@
         border-top: 1px solid var(--text-color);
     }
     .scrollable-content {
-        margin-top: 120px; /* Space for fixed top container */
-        margin-bottom: 80px; /* Space for fixed bottom container */
+        margin-top: 120px;
+        margin-bottom: 80px;
         overflow-y: auto;
         height: calc(100vh - 200px);
         padding: 20px;
@@ -47,7 +47,7 @@
     @media (max-width: 768px) {
         .scrollable-content {
             margin-top: 100px;
-            margin-bottom: 140px; /* Extra space for mobile footer */
+            margin-bottom: 140px;
             height: calc(100vh - 240px);
         }
     }
@@ -67,7 +67,7 @@
 
 <!-- Scrollable Content -->
 <div class="scrollable-content">
-    <form method="POST" action="{{ url_for('add_my_details') }}" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('add_my_details') }}" enctype="multipart/form-data" id="add-my-details-form">
         {{ form.hidden_tag() }}
         <div class="mb-3">
             <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
@@ -142,7 +142,7 @@
 
 <!-- Fixed Bottom Container -->
 <div class="fixed-bottom-container text-center">
-    <button type="submit" form="add_my_details_form" class="btn btn-primary me-2">Save</button>
+    <button type="submit" form="add-my-details-form" class="btn btn-primary me-2">Save</button>
     <a href="{{ url_for('my_profile') }}" class="btn btn-secondary">Cancel</a>
 </div>
 
@@ -166,7 +166,7 @@
         if (dobInput) {
             const dob = new Date(dobInput);
             const today = new Date();
-            const age = today.getFullYear() - dob.getFullYear();
+            let age = today.getFullYear() - dob.getFullYear();
             const monthDiff = today.getMonth() - dob.getMonth();
             if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
                 age--;
