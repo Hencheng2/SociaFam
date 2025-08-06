@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}View User Status{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    {% if not current_user.is_authenticated or not current_user.is_admin %}
+        <div class="alert alert-warning text-center" role="alert">
+            {% if not current_user.is_authenticated %}
+                Please <a href="{{ url_for('login') }}">log in</a> to view user statuses.
+            {% else %}
+                Only admins can access this page. Return to <a href="{{ url_for('dashboard') }}">dashboard</a>.
+            {% endif %}
+        </div>
+    {% else %}
+        <h2 class="mb-4 text-center">User Status Video</h2>
+        {% if video_url %}
+            <video class="img-fluid rounded" controls style="max-width: 100%; height: auto;">
+                <source src="{{ url_for('static', filename=video_url) }}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            {% if status_message %}
+                <p class="mt-3">{{ status_message }}</p>
+            {% endif %}
+        {% else %}
+            <p class="text-center text-muted">No video URL provided or video not found.</p>
+        {% endif %}
+        <div class="text-center">
+            <a href="{{ url_for('profile') }}" class="btn btn-primary mt-3">Back to Profile</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
