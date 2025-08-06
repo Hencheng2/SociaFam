@@ -62,7 +62,7 @@
 </div>
 
 <script>
-    // Client-side password confirmation validation
+document.addEventListener("DOMContentLoaded", function () {
     document.getElementById('register-form').addEventListener('submit', function(event) {
         const password = document.getElementById('password').value.trim();
         const confirmPassword = document.getElementById('confirm_password').value.trim();
@@ -78,5 +78,6 @@
             alert('Passwords do not match.');
         }
     });
+});
 </script>
 {% endblock %}
