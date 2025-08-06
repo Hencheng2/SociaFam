@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ member.fullName }}'s Details{% endblock %}
+
+{% block content %}
+<style>
+    .top-20 { top: 20%; }
+    .overflow-auto { max-height: 60vh; }
+</style>
+
+<div class="container mt-5 position-sticky top-0 bg-white shadow-sm p-3">
+    <h1 class="text-center mb-4">Edit {{ member.fullName }}'s Profile</h1>
+    <div class="text-center">
+        {% if member.profilePhoto %}
+            <a href="{{ url_for('view_photo', photo_id=member.id) }}">
+                <img src="{{ member.profilePhoto }}" class="rounded-circle" style="width: 100px; height: 100px;" alt="Member profile photo">
+            </a>
+            <p class="text-muted">Current Photo: <a href="{{ url_for('view_photo', photo_id=member.id) }}">View</a></p>
+        {% else %}
+            <p class="text-muted">No Photo</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="container mt-5 position-absolute top-20 start-0 end-0 overflow-auto">
+    <div class="card shadow-sm p-4 bg-transparent">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message | safe }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div class="mb-3">
+                <label for="full_name" class="form-label">Full Name</label>
+                <input type="text" class="form-control mb-3" id="full_name" name="full_name" value="{{ member.fullName }}" required>
+            </div>
+            <div class="mb-3">
+                <label for="gender" class="form-label">Gender</label>
+                <select class="form-control mb-3" id="gender" name="gender" required>
+                    <option value="">Select Gender</option>
+                    <option value="Male" {% if member.gender == "Male" %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if member.gender == "Female" %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if member.gender == "Other" %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="date_of_birth" class="form-label">Date of Birth</label>
+                <input type="date" class="form-control mb-3" id="date_of_birth" name="date_of_birth" value="{{ member.dateOfBirth }}" required>
+            </div>
+            <div class="mb-3 marital-status-container" style="display: none;">
+                <label for="marital_status" class="form-label">Marital Status</label>
+                <select class="form-control mb-3" id="marital_status" name="marital_status">
+                    <option value="">Select Marital Status</option>
+                    <option value="Single" {% if member.maritalStatus == "Single" %}selected{% endif %}>Single</option>
+                    <option value="Engaged" {% if member.maritalStatus == "Engaged" %}selected{% endif %}>Engaged</option>
+                    <option value="Married" {% if member.maritalStatus == "Married" %}selected{% endif %}>Married</option>
+                    <option value="Divorced" {% if member.maritalStatus == "Divorced" %}selected{% endif %}>Divorced</option>
+                    <option value="Widowed" {% if member.maritalStatus == "Widowed" %}selected{% endif %}>Widowed</option>
+                </select>
+            </div>
+            <div class="mb-3 spouses-container" style="display: none;">
+                <label for="spouses" class="form-label">Spouse(s) Names</label>
+                <input type="text" class="form-control mb-3" id="spouses" name="spouses" value="{{ member.spouses }}">
+            </div>
+            <div class="mb-3 fiance-container" style="display: none;">
+                <label for="fiance" class="form-label">Fiancé(e) Name</label>
+                <input type="text" class="form-control mb-3" id="fiance" name="fiance" value="{{ member.fiance }}">
+            </div>
+            <div class="mb-3 children-container" style="display: none;">
+                <label for="children" class="form-label">Children Names</label>
+                <input type="text" class="form-control mb-3" id="children" name="children" value="{{ member.children }}">
+            </div>
+            <div class="mb-3 school-container" style="display: none;">
+                <label for="school" class="form-label">School/University Name</label>
+                <input type="text" class="form-control mb-3" id="school" name="school" value="{{ member.school }}">
+            </div>
+            <div class="mb-3">
+                <label for="whereabouts" class="form-label">Current Whereabouts</label>
+                <input type="text" class="form-control mb-3" id="whereabouts" name="whereabouts" value="{{ member.whereabouts }}">
+            </div>
+            <div class="mb-3">
+                <label for="contact" class="form-label">Contact Information</label>
+                <input type="text" class="form-control mb-3" id="contact" name="contact" value="{{ member.contact }}">
+            </div>
+            <div class="mb-3">
+                <label for="bio" class="form-label">Biography</label>
+                <textarea class="form-control mb-3" id="bio" name="bio">{{ member.bio }}</textarea>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="container mt-5 position-sticky bottom-0 bg-white shadow-sm p-3 d-flex justify-content-between">
+    <div>
+        <label for="profile_photo" class="form-label">Upload New Profile Photo</label>
+        <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*">
+    </div>
+    {% if current_user.is_admin %}
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="allow_messaging" name="allow_messaging">
+            <label class="form-check-label" for="allow_messaging">Allow Messaging (for linked users)</label>
+        </div>
+    {% endif %}
+    <div>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" form="edit-form" class="btn btn-primary">Save Changes</button>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const dobInput = document.getElementById('date_of_birth');
+        const maritalStatusContainer = document.querySelector('.marital-status-container');
+        const spousesContainer = document.querySelector('.spouses-container');
+        const fianceContainer = document.querySelector('.fiance-container');
+        const childrenContainer = document.querySelector('.children-container');
+        const schoolContainer = document.querySelector('.school-container');
+        const maritalStatus = document.getElementById('marital_status');
+
+        function updateVisibility() {
+            const dob = new Date(dobInput.value || '{{ member.dateOfBirth }}');
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const monthDiff = today.getMonth() - dob.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) age--;
+
+            if (age >= 18) {
+                maritalStatusContainer.style.display = 'block';
+                childrenContainer.style.display = 'block';
+                schoolContainer.style.display = 'block';
+            } else {
+                maritalStatusContainer.style.display = 'none';
+                childrenContainer.style.display = 'none';
+                schoolContainer.style.display = 'none';
+            }
+
+            const status = maritalStatus.value || '{{ member.maritalStatus }}';
+            spousesContainer.style.display = status === 'Married' ? 'block' : 'none';
+            fianceContainer.style.display = status === 'Engaged' ? 'block' : 'none';
+        }
+
+        dobInput.addEventListener('change', updateVisibility);
+        maritalStatus.addEventListener('change', updateVisibility);
+
+        // Initial visibility check
+        updateVisibility();
+    });
+</script>
+{% endblock %}
