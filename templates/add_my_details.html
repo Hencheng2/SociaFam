@@ -1,195 +1,21 @@
-{% extends "base.html" %}
-
-{% block title %}
-    {% if is_editing and user_details %}
-        Edit Details for {{ user_details.full_name }}
-    {% else %}
-        Add My Personal Details
-    {% endif %}
-{% endblock %}
-
+{% extends 'base.html' %}
 {% block content %}
-<style>
-    .fixed-top-container {
-        position: fixed;
-        top: 56px; /* Adjust for navbar height */
-        left: 0;
-        right: 0;
-        background-color: var(--secondary-bg);
-        padding: 15px;
-        z-index: 1000;
-        border-bottom: 1px solid var(--text-color);
-    }
-    .fixed-bottom-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: var(--secondary-bg);
-        padding: 10px;
-        z-index: 1000;
-        border-top: 1px solid var(--text-color);
-    }
-    .scrollable-content {
-        margin-top: 120px; /* Space for fixed top container */
-        margin-bottom: 80px; /* Space for fixed bottom container */
-        overflow-y: auto;
-        height: calc(100vh - 200px);
-        padding: 20px;
-    }
-    .profile-photo-preview {
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 2px solid var(--primary-color);
-    }
-    @media (max-width: 768px) {
-        .scrollable-content {
-            margin-top: 100px;
-            margin-bottom: 140px; /* Extra space for mobile footer */
-            height: calc(100vh - 240px);
-        }
-    }
-</style>
+<div class="form-container">
+  <h2>My Profile Details</h2>
+  <form method="POST" action="{{ url_for('add_my_details') }}" enctype="multipart/form-data">
+    <label for="name">Full Name:</label>
+    <input type="text" id="name" name="name" required>
 
-<!-- Fixed Top Container -->
-<div class="fixed-top-container text-center">
-    <h2>
-        {% if is_editing and user_details %}
-            Edit Details for {{ user_details.full_name }}
-        {% else %}
-            Add My Personal Details
-        {% endif %}
-    </h2>
-    <img id="profile-photo-preview" src="{% if is_editing and user_details.profile_photo %}{{ url_for('static', filename='img/profile_photos/' + user_details.profile_photo) }}{% else %}{{ url_for('static', filename='img/default_profile.png') }}{% endif %}" alt="Profile Photo" class="profile-photo-preview">
+    <label for="dob">Date of Birth:</label>
+    <input type="date" id="dob" name="dob" required>
+
+    <label for="bio">Short Bio:</label>
+    <textarea id="bio" name="bio" rows="4"></textarea>
+
+    <label for="photo">Upload Profile Photo:</label>
+    <input type="file" id="photo" name="photo" accept="image/*">
+
+    <button type="submit">Save Details</button>
+  </form>
 </div>
-
-<!-- Scrollable Content -->
-<div class="scrollable-content">
-    <form method="POST" action="{{ url_for('add_my_details') }}" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-        <div class="mb-3">
-            <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="full_name" name="full_name" value="{% if is_editing and user_details %}{{ user_details.full_name }}{% elif current_user %}{{ current_user.full_name }}{% endif %}" required>
-        </div>
-        <div class="mb-3">
-            <label for="date_of_birth" class="form-label">Date of Birth</label>
-            <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" value="{% if is_editing and user_details %}{{ user_details.date_of_birth }}{% endif %}">
-        </div>
-        <div class="mb-3">
-            <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
-            <select class="form-select" id="gender" name="gender" required>
-                <option value="" disabled {% if not is_editing or not user_details %}selected{% endif %}>Select Gender</option>
-                <option value="Male" {% if is_editing and user_details and user_details.gender == 'Male' %}selected{% endif %}>Male</option>
-                <option value="Female" {% if is_editing and user_details and user_details.gender == 'Female' %}selected{% endif %}>Female</option>
-                <option value="Other" {% if is_editing and user_details and user_details.gender == 'Other' %}selected{% endif %}>Other</option>
-            </select>
-        </div>
-        <div class="mb-3" id="marital_status_container" style="display: none;">
-            <label for="marital_status" class="form-label">Marital Status</label>
-            <select class="form-select" id="marital_status" name="marital_status">
-                <option value="" disabled {% if not is_editing or not user_details %}selected{% endif %}>Select Marital Status</option>
-                <option value="Single" {% if is_editing and user_details and user_details.marital_status == 'Single' %}selected{% endif %}>Single</option>
-                <option value="Married" {% if is_editing and user_details and user_details.marital_status == 'Married' %}selected{% endif %}>Married</option>
-                <option value="Divorced" {% if is_editing and user_details and user_details.marital_status == 'Divorced' %}selected{% endif %}>Divorced</option>
-                <option value="Widowed" {% if is_editing and user_details and user_details.marital_status == 'Widowed' %}selected{% endif %}>Widowed</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="children_names" class="form-label">Names of Children (comma-separated, optional)</label>
-            <input type="text" class="form-control" id="children_names" name="children_names" value="{% if is_editing and user_details %}{{ user_details.children_names }}{% endif %}">
-        </div>
-        <div class="mb-3">
-            <label for="education_level" class="form-label">Education Level</label>
-            <select class="form-select" id="education_level" name="education_level">
-                <option value="None" {% if is_editing and user_details and user_details.education_level == 'None' %}selected{% endif %}>None</option>
-                <option value="Primary" {% if is_editing and user_details and user_details.education_level == 'Primary' %}selected{% endif %}>Primary</option>
-                <option value="High School" {% if is_editing and user_details and user_details.education_level == 'High School' %}selected{% endif %}>High School</option>
-                <option value="University" {% if is_editing and user_details and user_details.education_level == 'University' %}selected{% endif %}>University</option>
-            </select>
-        </div>
-        <div class="mb-3" id="institution_container" style="display: none;">
-            <label for="institution_name" class="form-label">Institution Name</label>
-            <input type="text" class="form-control" id="institution_name" name="institution_name" value="{% if is_editing and user_details %}{{ user_details.institution_name }}{% endif %}">
-        </div>
-        <div class="mb-3">
-            <label for="city" class="form-label">Current City</label>
-            <input type="text" class="form-control" id="city" name="city" value="{% if is_editing and user_details %}{{ user_details.city }}{% endif %}">
-        </div>
-        <div class="mb-3">
-            <label for="country" class="form-label">Current Country</label>
-            <input type="text" class="form-control" id="country" name="country" value="{% if is_editing and user_details %}{{ user_details.country }}{% endif %}">
-        </div>
-        <div class="mb-3">
-            <label for="phone_number" class="form-label">Contact Phone Number</label>
-            <input type="tel" class="form-control" id="phone_number" name="phone_number" value="{% if is_editing and user_details %}{{ user_details.phone_number }}{% endif %}">
-        </div>
-        <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" id="email" name="email" value="{% if is_editing and user_details %}{{ user_details.email }}{% elif current_user %}{{ current_user.email }}{% endif %}" readonly>
-        </div>
-        <div class="mb-3">
-            <label for="biography" class="form-label">Biography</label>
-            <textarea class="form-control" id="biography" name="biography" rows="4">{% if is_editing and user_details %}{{ user_details.biography }}{% endif %}</textarea>
-        </div>
-        <div class="mb-3">
-            <label for="profile_photo" class="form-label">Profile Photo</label>
-            <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*">
-        </div>
-    </form>
-</div>
-
-<!-- Fixed Bottom Container -->
-<div class="fixed-bottom-container text-center">
-    <button type="submit" form="add_my_details_form" class="btn btn-primary me-2">Save</button>
-    <a href="{{ url_for('my_profile') }}" class="btn btn-secondary">Cancel</a>
-</div>
-
-<script>
-    // Profile Photo Preview
-    document.getElementById('profile_photo').addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('profile-photo-preview').src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // Calculate Age and Toggle Marital Status
-    function toggleMaritalStatus() {
-        const dobInput = document.getElementById('date_of_birth').value;
-        const maritalStatusContainer = document.getElementById('marital_status_container');
-        if (dobInput) {
-            const dob = new Date(dobInput);
-            const today = new Date();
-            const age = today.getFullYear() - dob.getFullYear();
-            const monthDiff = today.getMonth() - dob.getMonth();
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-                age--;
-            }
-            maritalStatusContainer.style.display = age >= 18 ? 'block' : 'none';
-        } else {
-            maritalStatusContainer.style.display = 'none';
-        }
-    }
-
-    // Toggle Institution Name Input
-    function toggleInstitutionInput() {
-        const educationLevel = document.getElementById('education_level').value;
-        const institutionContainer = document.getElementById('institution_container');
-        institutionContainer.style.display = educationLevel !== 'None' ? 'block' : 'none';
-    }
-
-    // Initialize on Page Load
-    document.getElementById('date_of_birth').addEventListener('change', toggleMaritalStatus);
-    document.getElementById('education_level').addEventListener('change', toggleInstitutionInput);
-    window.addEventListener('load', () => {
-        toggleMaritalStatus();
-        toggleInstitutionInput();
-    });
-</script>
 {% endblock %}
