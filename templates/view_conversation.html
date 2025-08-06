@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with {{ other_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">{{ other_user.username }}</h1>
+    <div class="card shadow-sm p-4 mb-4">
+        {% for item in combined_feed %}
+            {% if item.type == "admin" %}
+                <div class="alert alert-info mb-2">
+                    System Notification: {{ item.content }}<br>
+                    <small>{{ moment(item.timestamp).calendar() }}</small>
+                </div>
+            {% elif item.type == "sender" %}
+                {% if item.media_type %}
+                    <div class="d-flex justify-content-end mb-2">
+                        {% if item.media_type == "image" %}
+                            <img src="{{ item.media_url }}" alt="Sent media" style="max-width: 200px;" class="me-2">
+                        {% elif item.media_type == "video" %}
+                            <video controls style="max-width: 200px;" class="me-2">
+                                <source src="{{ item.media_url }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        {% endif %}
+                        <div class="p-2 rounded bg-primary text-white">
+                            <a href="{{ item.media_url }}" class="btn btn-secondary btn-sm" download>Download</a><br>
+                            <small>{{ moment(item.timestamp).fromNow() }}</small>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="d-flex justify-content-end mb-2">
+                        <div class="p-2 rounded bg-primary text-white">
+                            {{ item.content }}<br>
+                            <small>{{ moment(item.timestamp).fromNow() }}</small>
+                        </div>
+                    </div>
+                {% endif %}
+            {% elif item.type == "receiver" %}
+                {% if item.media_type %}
+                    <div class="d-flex mb-2">
+                        {% if item.media_type == "image" %}
+                            <img src="{{ item.media_url }}" alt="Received media" style="max-width: 200px;" class="me-2">
+                        {% elif item.media_type == "video" %}
+                            <video controls style="max-width: 200px;" class="me-2">
+                                <source src="{{ item.media_url }}" type="video/mp4">
+                                Your browser does not support the video tag.
+                            </video>
+                        {% endif %}
+                        <div class="p-2 rounded bg-light">
+                            <a href="{{ item.media_url }}" class="btn btn-secondary btn-sm" download>Download</a><br>
+                            <small>{{ moment(item.timestamp).fromNow() }}</small>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="d-flex mb-2">
+                        <div class="p-2 rounded bg-light">
+                            {{ item.content }}<br>
+                            <small>{{ moment(item.timestamp).fromNow() }}</small>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    </div>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        <div class="mb-2">
+            <textarea class="form-control mb-2" rows="3" name="content" placeholder="Type a message..."></textarea>
+        </div>
+        <div class="mb-2">
+            <label for="media" class="form-label">Upload Media</label>
+            <input type="file" class="form-control mb-2" id="media" name="media">
+        </div>
+        <div class="text-center">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mediaModal">Send</button>
+        </div>
+    </form>
+</div>
+
+<!-- Media Modal -->
+<div class="modal fade" id="mediaModal" tabindex="-1" aria-labelledby="mediaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mediaModalLabel">Upload Media</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Max file size 5MB. Supported: Images (PNG, JPG, GIF), Videos (MP4, MOV, AVI, WEBM)</p>
+                <input type="file" class="form-control" id="media-confirm" name="media">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" form="message-form" class="btn btn-primary">Upload</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
