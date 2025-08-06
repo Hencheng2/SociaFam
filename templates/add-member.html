@@ -1,163 +1,18 @@
-{% extends "base.html" %}
-
-{% block title %}Add User{% endblock %}
-
+{% extends 'base.html' %}
 {% block content %}
-<style>
-    .card {
-        max-width: 600px;
-        margin: 0 auto;
-    }
-</style>
+<div class="form-container">
+  <h2>Add Family Member</h2>
+  <form method="POST" action="{{ url_for('add_member') }}">
+    <label for="name">Full Name:</label>
+    <input type="text" id="name" name="name" required>
 
-<div class="container mt-5">
-    {% if not current_user.is_authenticated or not current_user.is_admin %}
-        <div class="alert alert-warning text-center" role="alert">
-            {% if not current_user.is_authenticated %}
-                Please <a href="{{ url_for('login') }}">log in</a> to add a new member.
-            {% else %}
-                Only admins can access this page. Return to <a href="{{ url_for('dashboard') }}">dashboard</a>.
-            {% endif %}
-        </div>
-    {% else %}
-        <div class="card shadow-sm p-4">
-            <h2 class="mb-4 text-center">Add New Family Member</h2>
-            <form method="POST" action="{{ url_for('add_member') }}" enctype="multipart/form-data">
-                {{ form.hidden_tag() }}
+    <label for="dob">Date of Birth:</label>
+    <input type="date" id="dob" name="dob" required>
 
-                <!-- Full Name -->
-                <div class="mb-3">
-                    <label for="fullName" class="form-label">Full Name</label>
-                    <input type="text" class="form-control" id="fullName" name="fullName" placeholder="Enter full name" value="{{ form_data.fullName if form_data.fullName else '' }}" required>
-                </div>
+    <label for="bio">Short Bio:</label>
+    <textarea id="bio" name="bio" rows="4"></textarea>
 
-                <!-- Date of Birth -->
-                <div class="mb-3">
-                    <label for="dateOfBirth" class="form-label">Date of Birth</label>
-                    <input type="text" class="form-control" id="dateOfBirth" name="dateOfBirth" placeholder="YYYY-MM-DD" value="{{ form_data.dateOfBirth if form_data.dateOfBirth else '' }}" required>
-                    <div id="dateHelp" class="form-text">Enter date in YYYY-MM-DD format.</div>
-                </div>
-
-                <!-- Gender -->
-                <div class="mb-3">
-                    <label for="gender" class="form-label">Gender</label>
-                    <select class="form-control" id="gender" name="gender" required>
-                        <option value="" {% if not form_data.gender %}selected{% endif %}>Select Gender</option>
-                        <option value="Male" {% if form_data.gender == 'Male' %}selected{% endif %}>Male</option>
-                        <option value="Female" {% if form_data.gender == 'Female' %}selected{% endif %}>Female</option>
-                        <option value="Other" {% if form_data.gender == 'Other' %}selected{% endif %}>Other</option>
-                    </select>
-                </div>
-
-                <!-- Marital Status (Conditional) -->
-                <div class="mb-3" id="maritalStatusGroup" style="display: none;">
-                    <label for="maritalStatus" class="form-label">Marital Status</label>
-                    <select class="form-control" id="maritalStatus" name="maritalStatus">
-                        <option value="Single" {% if form_data.maritalStatus == 'Single' %}selected{% endif %}>Single</option>
-                        <option value="Engaged" {% if form_data.maritalStatus == 'Engaged' %}selected{% endif %}>Engaged</option>
-                        <option value="Married" {% if form_data.maritalStatus == 'Married' %}selected{% endif %}>Married</option>
-                        <option value="Divorced" {% if form_data.maritalStatus == 'Divorced' %}selected{% endif %}>Divorced</option>
-                        <option value="Widowed" {% if form_data.maritalStatus == 'Widowed' %}selected{% endif %}>Widowed</option>
-                    </select>
-                </div>
-
-                <!-- Spouse Name(s) -->
-                <div class="mb-3">
-                    <label for="spouseNames" class="form-label">Spouse Name(s)</label>
-                    <input type="text" class="form-control" id="spouseNames" name="spouseNames" placeholder="Enter spouse name(s), comma-separated" value="{{ form_data.spouseNames if form_data.spouseNames else '' }}">
-                </div>
-
-                <!-- Fiance(e) Name(s) -->
-                <div class="mb-3">
-                    <label for="fianceNames" class="form-label">Fiance(e) Name(s)</label>
-                    <input type="text" class="form-control" id="fianceNames" name="fianceNames" placeholder="Enter fiance(e) name(s), comma-separated" value="{{ form_data.fianceNames if form_data.fianceNames else '' }}">
-                </div>
-
-                <!-- Children Name(s) -->
-                <div class="mb-3">
-                    <label for="childrenNames" class="form-label">Children Name(s)</label>
-                    <input type="text" class="form-control" id="childrenNames" name="childrenNames" placeholder="Enter children name(s), comma-separated" value="{{ form_data.childrenNames if form_data.childrenNames else '' }}">
-                </div>
-
-                <!-- School/University -->
-                <div class="mb-3">
-                    <label for="schoolLevel" class="form-label">Education Level</label>
-                    <select class="form-control" id="schoolLevel" name="schoolLevel">
-                        <option value="" {% if not form_data.schoolLevel %}selected{% endif %}>Select Education Level</option>
-                        <option value="Primary" {% if form_data.schoolLevel == 'Primary' %}selected{% endif %}>Primary</option>
-                        <option value="High School" {% if form_data.schoolLevel == 'High School' %}selected{% endif %}>High School</option>
-                        <option value="University" {% if form_data.schoolLevel == 'University' %}selected{% endif %}>University</option>
-                    </select>
-                </div>
-                <div class="mb-3" id="schoolNameGroup" style="display: none;">
-                    <label for="schoolName" class="form-label">School/University Name</label>
-                    <input type="text" class="form-control" id="schoolName" name="schoolName" placeholder="Enter institution name" value="{{ form_data.schoolName if form_data.schoolName else '' }}">
-                </div>
-
-                <!-- Current Whereabouts -->
-                <div class="mb-3">
-                    <label for="whereabouts" class="form-label">Current Whereabouts</label>
-                    <input type="text" class="form-control" id="whereabouts" name="whereabouts" placeholder="Enter city, country" value="{{ form_data.whereabouts if form_data.whereabouts else '' }}">
-                </div>
-
-                <!-- Contact Information -->
-                <div class="mb-3">
-                    <label for="contact" class="form-label">Contact Information</label>
-                    <input type="text" class="form-control" id="contact" name="contact" placeholder="Enter phone and/or email, comma-separated" value="{{ form_data.contact if form_data.contact else '' }}">
-                </div>
-
-                <!-- Short Biography -->
-                <div class="mb-3">
-                    <label for="bio" class="form-label">Short Biography</label>
-                    <textarea class="form-control" id="bio" name="bio" rows="4">{{ form_data.bio if form_data.bio else '' }}</textarea>
-                </div>
-
-                <!-- Buttons -->
-                <div class="d-flex justify-content-end gap-2">
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Cancel</a>
-                    <button type="submit" class="btn btn-primary">Add Member</button>
-                </div>
-            </form>
-        </div>
-    {% endif %}
+    <button type="submit">Add Member</button>
+  </form>
 </div>
-
-<script>
-    // Calculate age from date of birth and show/hide marital status
-    function toggleMaritalStatus() {
-        const dobInput = document.getElementById('dateOfBirth');
-        const maritalStatusGroup = document.getElementById('maritalStatusGroup');
-        const dob = new Date(dobInput.value);
-        const today = new Date('2025-08-06'); // Hardcoded to match current date
-        const age = today.getFullYear() - dob.getFullYear();
-        const monthDiff = today.getMonth() - dob.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-            age--;
-        }
-        if (dobInput.value && !isNaN(dob) && age >= 18) {
-            maritalStatusGroup.style.display = 'block';
-        } else {
-            maritalStatusGroup.style.display = 'none';
-        }
-    }
-
-    // Show/hide school name input based on education level
-    function toggleSchoolName() {
-        const schoolLevel = document.getElementById('schoolLevel');
-        const schoolNameGroup = document.getElementById('schoolNameGroup');
-        if (schoolLevel.value && schoolLevel.value !== '') {
-            schoolNameGroup.style.display = 'block';
-        } else {
-            schoolNameGroup.style.display = 'none';
-        }
-    }
-
-    // Initialize on page load and input change
-    document.getElementById('dateOfBirth').addEventListener('change', toggleMaritalStatus);
-    document.getElementById('schoolLevel').addEventListener('change', toggleSchoolName);
-    window.addEventListener('load', () => {
-        toggleMaritalStatus();
-        toggleSchoolName();
-    });
-</script>
 {% endblock %}
