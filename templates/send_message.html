@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}Send Message{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card p-4 shadow">
+                <h2 class="card-title text-center mb-4">Send Message to {{ receiver_username }}</h2>
+                <form method="POST" action="{{ url_for('send_message', receiver_user_id=receiver_user_id, redirect_member_id=redirect_member_id) }}">
+                    <div class="mb-3">
+                        <label for="body" class="form-label">Message</label>
+                        <textarea class="form-control" id="body" name="body" rows="5" required>{{ body if body else '' }}</textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Send Message</button>
+                </form>
+                <div class="text-center mt-3">
+                    {% if redirect_member_id %}
+                        <a href="{{ url_for('member_detail', member_id=redirect_member_id) }}" class="btn btn-secondary">Back to Profile</a>
+                    {% else %}
+                        <a href="{{ url_for('inbox') }}" class="btn btn-secondary">Back to Inbox</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
