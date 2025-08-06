@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Chat with Admin AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid bg-light py-3 shadow-sm">
+    <h4 class="mb-0 text-center">
+        {% if other_user %}
+            {{ other_user.originalName }} ({{ other_user.username }})
+        {% else %}
+            Admin AI
+        {% endif %}
+    </h4>
+</div>
+
+<div class="container mt-4">
+    {% if not current_user.is_authenticated %}
+        <div class="alert alert-warning text-center" role="alert">
+            Please <a href="{{ url_for('login') }}">log in</a> to chat with the Admin AI.
+        </div>
+    {% else %}
+        <!-- Chat History Container -->
+        <div class="card p-3" id="chat-messages">
+            Loading chat history...
+            <!-- Chat messages will be dynamically loaded by JavaScript -->
+        </div>
+
+        <!-- Message Input Container -->
+        <div class="container mt-3">
+            <form method="POST" action="{{ url_for('send_message', recipient_id=other_user.id if other_user else 0) }}">
+                {{ form.hidden_tag() }}
+                <div class="mb-3">
+                    <textarea class="form-control" name="message" placeholder="Type your message..." rows="3"></textarea>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary mt-2">Send</button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chatMessages = document.getElementById('chat-messages');
+        const recipientId = {{ other_user.id | default(0) | tojson }};
+        const currentUserId = {{ current_user.id | default(0) | tojson }};
+        const aiUsername = {{ other_user.username | default('Admin AI') | tojson }};
+
+        if (!recipientId || !currentUserId) {
+            chatMessages.innerHTML = '<p class="text-center text-danger">Error: Unable to load chat. Please try again.</p>';
+            return;
+        }
+
+        // Fetch messages with a timeout of 10 seconds
+        const fetchMessages = async () => {
+            try {
+                const response = await Promise.race([
+                    fetch(`/get_messages/${recipientId}`),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000))
+                ]);
+                const data = await response.json();
+                if (data.messages && data.messages.length > 0) {
+                    chatMessages.innerHTML = data.messages.map(msg => {
+                        const sender = msg.sender_id === currentUserId ? 'You' : aiUsername;
+                        return `<div class="message ${msg.sender_id === currentUserId ? 'text-end' : 'text-start'} mb-2">
+                            <strong>${sender}:</strong> ${msg.content}
+                            <small class="text-muted d-block">${new Date(msg.timestamp).toLocaleString()}</small>
+                        </div>`;
+                    }).join('');
+                } else {
+                    chatMessages.innerHTML = '<p class="text-center text-muted">No messages yet.</p>';
+                }
+            } catch (error) {
+                chatMessages.innerHTML = '<p class="text-center text-danger">Error loading chat history.</p>';
+            }
+        };
+
+        fetchMessages();
+        // Poll for new messages every 5 seconds
+        setInterval(fetchMessages, 5000);
+    });
+</script>
+{% endblock %}
+
+{% block footer %}{% endblock %}
