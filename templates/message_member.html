@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+
+{% block title %}Start New Conversation{% endblock %}
+
+{% block content %}
+<style>
+    .fixed-alerts {
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        padding: 10px;
+    }
+    .overflow-auto { max-height: 70vh; }
+</style>
+
+<!-- Fixed Alerts Container -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="fixed-alerts">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message | safe }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<!-- Fixed Header Container -->
+<div class="container mt-5 position-sticky top-0 bg-white shadow-sm p-3">
+    <h1 class="text-center mb-4">Start New Conversation</h1>
+    <p class="text-center text-muted">Choose user to start a new conversation.</p>
+    <form method="POST" id="search-form">
+        {{ form.hidden_tag() }}
+        <div class="text-center">
+            <input type="text" class="form-control" id="search-input" name="search_query" placeholder="Search members...">
+        </div>
+    </form>
+</div>
+
+<!-- Main Members List Container -->
+<div class="container mt-5 position-relative overflow-auto">
+    <!-- Fixed AI List Item -->
+    <div class="list-group-item list-group-item-action d-flex align-items-center">
+        <img src="{{ url_for('static', filename='images/ai-icon.png') }}" class="rounded-circle me-2" style="width: 40px; height: 40px;" alt="AI profile icon">
+        <div class="ms-2">
+            <strong>Admin</strong>
+            <small>(@AdminAI)</small>
+            <a href="{{ url_for('ai_chat') }}" class="btn btn-primary btn-sm ms-2">Message</a>
+        </div>
+    </div>
+
+    <!-- Members List -->
+    <div class="list-group" id="members-list">
+        {% if messageable_members and messageable_members|length > 0 %}
+            {% for member in messageable_members %}
+                <div class="list-group-item list-group-item-action d-flex align-items-center">
+                    <img src="{{ url_for('static', filename=member.profilePhoto if member.profilePhoto else 'images/default-profile.png') }}" class="rounded-circle me-2" style="width: 40px; height: 40px;" alt="Profile photo">
+                    <div class="ms-2">
+                        <strong>{{ member.fullName }}</strong>
+                        <a href="{{ url_for('send_message', recipient_id=member.id) }}" class="btn btn-primary btn-sm ms-2">Message</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-center text-muted">No users found who can be messaged.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search-input');
+        const membersList = document.getElementById('members-list');
+
+        searchInput.addEventListener('input', function() {
+            const query = searchInput.value.toLowerCase();
+            fetch(`{{ url_for('search_members') }}?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    membersList.innerHTML = '';
+                    if (data.length > 0) {
+                        data.forEach(member => {
+                            const item = document.createElement('div');
+                            item.className = 'list-group-item list-group-item-action d-flex align-items-center';
+                            item.innerHTML = `
+                                <img src="${member.profilePhoto || '{{ url_for('static', filename='images/default-profile.png') }}'}" class="rounded-circle me-2" style="width: 40px; height: 40px;" alt="Profile photo">
+                                <div class="ms-2">
+                                    <strong>${member.fullName}</strong>
+                                    <a href="{{ url_for('send_message', recipient_id='') }}${member.id}" class="btn btn-primary btn-sm ms-2">Message</a>
+                                </div>
+                            `;
+                            membersList.appendChild(item);
+                        });
+                    } else {
+                        membersList.innerHTML = '<p class="text-center text-muted">No users found who can be messaged.</p>';
+                    }
+                })
+                .catch(error => console.error('Error fetching members:', error));
+        });
+    });
+</script>
+{% endblock %}
