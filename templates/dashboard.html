@@ -18,7 +18,7 @@
                 <h4 class="card-title">Profile</h4>
                 {% if user_member_profile %}
                     <div class="d-flex align-items-center">
-                        <img src="{{ url_for('static', filename=user_member_profile.profilePhoto if user_member_profile.profilePhoto else 'images/default-profile.png') }}" class="rounded-circle" style="width: 100px; height: 100px;" alt="User profile photo">
+                        <img src="{{ url_for('static', filename=user_member_profile.profilePhoto if user_member_profile.profilePhoto else 'img/default_profile.png') }}" class="rounded-circle" style="width: 100px; height: 100px;" alt="User profile photo">
                         <div class="ms-3">
                             <p class="mb-0">{{ user_member_profile.fullName }}</p>
                             <p class="mb-0">{{ user_member_profile.association }}</p>
@@ -57,10 +57,14 @@
                         <tbody>
                             {% for member in other_users_members %}
                                 <tr>
-                                    <td><img src="{{ url_for('static', filename=member.profilePhoto if member.profilePhoto else 'images/default-profile.png') }}" class="rounded-circle" style="width: 50px; height: 50px;" alt="Profile photo"></td>
+                                    <td>
+                                        <img src="{{ url_for('static', filename=member.profilePhoto if member.profilePhoto else 'img/default_profile.png') }}" class="rounded-circle" style="width: 50px; height: 50px;" alt="Profile photo">
+                                    </td>
                                     <td>{{ member.fullName }}</td>
                                     <td>{{ member.association }}</td>
-                                    <td><a href="{{ url_for('member_detail', member_id=member.id) }}" class="btn btn-primary btn-sm">View Profile</a></td>
+                                    <td>
+                                        <a href="{{ url_for('member_detail', member_id=member.id) }}" class="btn btn-primary btn-sm">View Profile</a>
+                                    </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
