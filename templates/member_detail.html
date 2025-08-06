@@ -8,10 +8,11 @@
     .card { background-color: rgba(255, 255, 255, 0.9); }
 </style>
 
+<!-- Header Section -->
 <div class="container mt-5 position-sticky top-0 bg-white shadow-sm p-3">
     <div class="text-center">
         {% if member.profilePhoto %}
-            <img src="{{ member.profilePhoto }}" class="rounded-circle" style="width: 150px; height: 150px;" alt="Member profile photo">
+            <img src="{{ member.profilePhoto }}" class="rounded-circle" style="width: 150px; height: 150px;" alt="{{ member.fullName }} profile photo">
         {% else %}
             <img src="{{ url_for('static', filename='images/default-profile.png') }}" class="rounded-circle" style="width: 150px; height: 150px;" alt="Default profile photo">
         {% endif %}
@@ -22,7 +23,7 @@
             <a href="{{ url_for('message_member', recipient_id=member.id) }}" class="btn btn-primary">Send Message</a>
         {% endif %}
         {% if current_user.is_admin or current_user.id == member.user_id %}
-            <a href="{{ url_for('edit_member', member_id=member.id) }}" class="btn btn-primary">Edit Member</a>
+            <a href="{{ url_for('edit_member', member_id=member.id) }}" class="btn btn-warning">Edit Member</a>
         {% endif %}
         {% if current_user.is_admin %}
             <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete Member Profile</button>
@@ -30,6 +31,7 @@
     </div>
 </div>
 
+<!-- Details Section -->
 <div class="container mt-5 position-relative overflow-auto">
     <div class="card p-4 bg-transparent">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -40,13 +42,13 @@
                 </div>
             {% endfor %}
         {% endwith %}
+
         {% if member.needs_details_update and current_user.is_admin %}
             <div class="alert alert-warning mb-4" role="alert">
                 This member's profile needs more details! Edit to update.
             </div>
         {% endif %}
 
-        <!-- Personal Details Section -->
         <div class="card-body">
             {% set pronoun_subject = 'They' %}
             {% set pronoun_possessive = 'Their' %}
@@ -73,6 +75,80 @@
             {% if member.contact %}
                 <p>You can reach {{ pronoun_object }} at {{ member.contact }}</p>
             {% endif %}
+            {% if member.bio %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <strong>Biography:</strong><br> {{ member.bio }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if temp_video and temp_video.is_active %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5>Video Status</h5>
+                    <video controls width="100%" class="mb-3">
+                        <source src="{{ temp_video.video_url }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                    <p>Uploaded: {{ moment(temp_video.upload_time).fromNow() }} (Expires: {{ moment(temp_video.expires_at).calendar() }})</p>
+                    {% if current_user.is_admin or current_user.id == member.user_id %}
+                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteStatusModal">Delete Status</button>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Member Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete {{ member.fullName }}'s profile? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('delete_member', member_id=member.id) }}">
+                    {{ form.hidden_tag() }}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Status Modal -->
+<div class="modal fade" id="deleteStatusModal" tabindex="-1" aria-labelledby="deleteStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteStatusModalLabel">Confirm Status Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete the video status for {{ member.fullName }}? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ url_for('delete_status', member_id=member.id) }}">
+                    {{ form.hidden_tag() }}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+{% endblock %}
             {% if member.bio %}
                 <div class="card mb-4">
                     <div class="card-body">
