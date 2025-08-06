@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Success!{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card p-4 shadow text-center">
+                <h2 class="card-title mb-4 text-success"><i class="fas fa-check-circle me-2"></i>Success!</h2>
+                <p class="lead">{{ message }}</p>
+                <div class="mt-4">
+                    <a href="{{ url_for('home') }}" class="btn btn-primary me-2">Go to Home</a>
+                    <a href="{{ url_for('list_members') }}" class="btn btn-secondary">View Members</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
