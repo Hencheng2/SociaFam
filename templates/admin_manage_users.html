@@ -1,25 +1,178 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Manage Users{% endblock %}
+{% block title %}Admin - Manage Users{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    {% if not current_user.is_authenticated or not current_user.is_admin %}
-        <div class="alert alert-warning text-center" role="alert">
-            {% if not current_user.is_authenticated %}
-                Please <a href="{{ url_for('login') }}">log in</a> to access the admin panel.
-            {% else %}
-                Only admins can access this page. Return to <a href="{{ url_for('dashboard') }}">dashboard</a>.
-            {% endif %}
-        </div>
-    {% else %}
-        <!-- Registered Users Section -->
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h2 class="mb-4 text-center">Admin Panel - Manage Users</h2>
-                <h4 class="card-title">Registered Users</h4>
-                {% if users and users|length > 0 %}
-                    <table class="table table-striped table-hover">
+
+<style>
+    /* Fixed Panel Container */
+    .fixed-panel-container {
+        position: fixed;
+        left: 0;
+        width: 100%;
+        background-color: var(--background-color);
+        box-shadow: none;
+        border: none;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        padding: 0 20px; /* Consistent horizontal padding */
+    }
+
+    /* Top panel for Users */
+    .users-container {
+        top: 70px; /* Below the main navbar */
+        height: calc(50vh - 35px); /* Approximately top half, accounting for navbar */
+        border-bottom: 1px solid var(--card-border);
+        z-index: 999;
+    }
+
+    /* Bottom panel for Members */
+    .members-container {
+        bottom: 0;
+        height: calc(50vh - 35px); /* Approximately bottom half, accounting for footer/navbar space */
+        border-top: 1px solid var(--card-border);
+        z-index: 998;
+    }
+
+    .panel-header {
+        flex-shrink: 0; /* Prevent header from shrinking */
+        padding: 15px 0 10px 0; /* Adjusted padding, horizontal handled by container */
+        background-color: var(--background-color);
+        border-bottom: 1px solid var(--card-border);
+        box-sizing: border-box;
+    }
+
+    .panel-content-scrollable {
+        flex-grow: 1; /* Allow content to fill remaining space */
+        overflow-y: auto; /* Enable vertical scrolling */
+        padding-bottom: 20px; /* Padding at the bottom of scrollable area */
+        position: relative; /* For positioning child elements */
+    }
+
+    .fixed-panel-container h1 {
+        font-size: 1.6em;
+        margin-bottom: 8px;
+    }
+
+    .fixed-panel-container h3 {
+        font-size: 1.1em;
+        margin-bottom: 0;
+    }
+
+    /* Table Styling */
+    .table {
+        color: var(--text-color);
+        margin-bottom: 0;
+        width: 100%; /* Ensure table takes full width of its container */
+        table-layout: auto; /* Allow columns to size based on content */
+    }
+
+    .table th {
+        background-color: var(--header-bg);
+        color: var(--header-text);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        font-size: 0.75em;
+        padding: 8px;
+        text-align: left; /* Align header text to left */
+    }
+
+    .table td {
+        vertical-align: middle;
+        font-size: 0.7em;
+        padding: 8px;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: var(--hover-bg);
+    }
+
+    .card {
+        background-color: transparent; /* Make card background transparent */
+        border: none; /* Remove card border */
+        box-shadow: none; /* Remove card shadow */
+        margin-bottom: 0;
+    }
+
+    /* Flash Messages Container */
+    .alert-container {
+        position: fixed;
+        top: 70px; /* Below navbar */
+        left: 50%;
+        transform: translateX(-50%);
+        width: 90%;
+        max-width: 600px;
+        z-index: 1050;
+        text-align: center;
+        padding-top: 10px; /* Small gap from top */
+    }
+    .alert {
+        margin-bottom: 10px; /* Space between multiple alerts */
+    }
+
+
+    /* Modal Specific Styles (from original file) */
+    .modal.fade.show { overflow: hidden auto; z-index: 99999 !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0px !important; left: 0px !important; width: 100vw !important; height: 100vh !important; transform: none !important; }
+    .modal-backdrop.fade.show { z-index: 99998 !important; opacity: 0.5 !important; position: fixed !important; }
+    .modal-dialog { z-index: 99999 !important; position: relative !important; transform: none !important; }
+    .modal-content { z-index: 99999 !important; position: relative !important; }
+
+    /* In-page overlay for linking user (might not be used but keeping styles) */
+    .in-page-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.6); z-index: 100; visibility: hidden; opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
+    .in-page-overlay.show { visibility: visible; opacity: 1; }
+    .in-page-overlay .modal-content { position: relative; z-index: 101; background-color: var(--card-bg); color: var(--text-color); border: 1px solid var(--card-border); border-radius: 0.5rem; box-shadow: rgba(0, 0, 0, 0.15) 0px 0.5rem 1rem; max-width: 500px; width: 90%; margin: auto; }
+
+    /* Buttons in table */
+    .table .btn {
+        font-size: 0.7em;
+        padding: 4px 8px;
+        white-space: nowrap; /* Prevent button text from wrapping */
+    }
+
+    /* Responsive adjustments */
+    @media (min-width: 768px) {
+        .fixed-panel-container {
+            padding: 0 30px;
+        }
+        .panel-header {
+            padding: 20px 0 10px 0;
+        }
+        .panel-content-scrollable {
+            padding-bottom: 30px;
+        }
+        .fixed-panel-container h1 {
+            font-size: 2em;
+        }
+        .fixed-panel-container h3 {
+            font-size: 1.4em;
+        }
+        .table th {
+            font-size: 0.85em;
+        }
+        .table td {
+            font-size: 0.8em;
+        }
+        .table .btn {
+            font-size: 0.75em;
+            padding: 5px 10px;
+        }
+    }
+</style>
+
+
+{# Users Container (Top Half) #}
+<div class="fixed-panel-container users-container" id="usersContainer">
+    <div class="panel-header">
+        <h1 class="text-center">Admin Panel - Manage Users</h1>
+        <h3 class="card-title">Registered Users</h3>
+    </div>
+    <div class="panel-content-scrollable">
+        <div class="card">
+            {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -32,182 +185,164 @@
                         </thead>
                         <tbody>
                             {% for user in users %}
+                                {# Exclude admin users and AdminAI from this list #}
+                                {% if not user.is_admin and user.username != 'AdminAI' %}
                                 <tr>
                                     <td>{{ user.id }}</td>
                                     <td>{{ user.username }}</td>
                                     <td>{{ user.originalName }}</td>
                                     <td>{{ user.unique_key }}</td>
-                                    <td>{{ 'Yes' if user.password_reset_pending == 1 else 'No' }}</td>
                                     <td>
-                                        <form method="POST" action="{{ url_for('reset_password', user_id=user.id) }}" style="display: inline;">
-                                            {{ form.hidden_tag() }}
-                                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#resetPasswordModal{{ user.id }}">Reset P/W</button>
-                                        </form>
-                                        {% if user.username != config.ADMIN_USERNAME %}
-                                            <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" style="display: inline;">
-                                                {{ form.hidden_tag() }}
-                                                <button type="submit" class="btn btn-danger btn-sm" style="margin-left: 5px;" onclick="return confirm('Are you sure you want to delete this user?')">Delete</button>
-                                            </form>
-                                            {% if user.password_reset_pending == 0 %}
-                                                <form method="POST" action="{{ url_for('initiate_password_reset', user_id=user.id) }}" style="display: inline;">
-                                                    {{ form.hidden_tag() }}
-                                                    <button type="submit" class="btn btn-warning btn-sm" style="margin-left: 5px;" onclick="return confirm('Initiate password reset for this user?')">Initiate Reset</button>
-                                                </form>
-                                            {% endif %}
+                                        {% if user.password_reset_pending == 1 %}
+                                            <span class="badge bg-warning text-dark">Pending</span>
+                                            <span class="badge bg-info ms-1" data-bs-toggle="tooltip" title="Expires: {{ moment(user.reset_request_timestamp).add(60, 'minutes').calendar() }}">Expires</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">No</span>
                                         {% endif %}
                                     </td>
-                                </tr>
-                                <!-- Reset Password Modal -->
-                                <div class="modal fade" id="resetPasswordModal{{ user.id }}" tabindex="-1" aria-labelledby="resetPasswordModalLabel{{ user.id }}" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title" id="resetPasswordModalLabel{{ user.id }}">Reset Password for {{ user.username }}</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <form method="POST" action="{{ url_for('reset_password', user_id=user.id) }}">
-                                                    {{ form.hidden_tag() }}
-                                                    <div class="mb-3">
-                                                        <label for="new_password_{{ user.id }}" class="form-label">New Password</label>
-                                                        <input type="password" class="form-control" id="new_password_{{ user.id }}" name="new_password" required>
-                                                    </div>
-                                                    <div class="mb-3">
-                                                        <label for="confirm_password_{{ user.id }}" class="form-label">Confirm New Password</label>
-                                                        <input type="password" class="form-control" id="confirm_password_{{ user.id }}" name="confirm_password" required>
-                                                    </div>
-                                                    <div class="d-flex justify-content-end gap-2">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                        <button type="submit" class="btn btn-primary">Reset Password</button>
-                                                    </div>
+                                    <td>
+                                        <div class="d-flex flex-column flex-md-row gap-1">
+                                            {# Initiate Password Reset Request (Admin actions it) #}
+                                            {% if user.password_reset_pending == 0 %}
+                                                <form action="{{ url_for('admin_initiate_reset', user_id=user.id) }}" method="POST" style="display:inline;">
+                                                    <button type="submit" class="btn btn-sm btn-warning">Initiate Reset</button>
                                                 </form>
-                                            </div>
+                                            {% else %}
+                                                <button type="button" class="btn btn-sm btn-success" disabled>Reset Initiated</button>
+                                            {% endif %}
+
+                                            {# Delete User Account #}
+                                            <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger"
+                                                        {% if user.id == current_user.id %}disabled title="Cannot delete your own account"{% endif %}>Delete</button>
+                                            </form>
                                         </div>
-                                    </div>
-                                </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
-                {% else %}
-                    <p class="text-center text-muted">No registered users found.</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Member Profiles Section -->
-        <div class="container mt-5">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h4 class="card-title">Member Profiles</h4>
-                    {% if members_with_status and members_with_status|length > 0 %}
-                        <table class="table table-striped table-hover">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Full Name</th>
-                                    <th>Login Access</th>
-                                    <th>Messaging</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for member in members_with_status %}
-                                    <tr>
-                                        <td>{{ member.id }}</td>
-                                        <td>{{ member.fullName }}</td>
-                                        <td>
-                                            {% if member.user_id %}
-                                                <form method="POST" action="{{ url_for('toggle_login_access', member_id=member.id) }}">
-                                                    {{ form.hidden_tag() }}
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" name="can_login" id="can_login_{{ member.id }}" {% if member.can_login %}checked{% endif %}>
-                                                        <label class="form-check-label" for="can_login_{{ member.id }}">
-                                                            {{ 'Enabled' if member.can_login else 'Disabled' }}
-                                                        </label>
-                                                    </div>
-                                                </form>
-                                            {% else %}
-                                                N/A
-                                            {% endif %}
-                                        </td>
-                                        <td>{{ 'Enabled' if member.user_id and member.can_message else 'Disabled' if member.user_id else 'N/A' }}</td>
-                                        <td>
-                                            <a href="{{ url_for('view_member', member_id=member.id) }}" class="btn btn-primary btn-sm">View</a>
-                                            <a href="{{ url_for('edit_member', member_id=member.id) }}" class="btn btn-primary btn-sm" style="margin-left: 5px;">Edit</a>
-                                            <form method="POST" action="{{ url_for('delete_member', member_id=member.id) }}" style="display: inline;">
-                                                {{ form.hidden_tag() }}
-                                                <button type="submit" class="btn btn-danger btn-sm" style="margin-left: 5px;" onclick="return confirm('Are you sure you want to delete this member?')">Delete</button>
-                                            </form>
-                                            {% if not member.user_id %}
-                                                <button type="button" class="btn btn-success btn-sm" style="margin-left: 5px;" data-bs-toggle="modal" data-bs-target="#linkUserModal{{ member.id }}">Link User</button>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    <!-- Link User Modal -->
-                                    {% if not member.user_id %}
-                                        <div class="modal fade" id="linkUserModal{{ member.id }}" tabindex="-1" aria-labelledby="linkUserModalLabel{{ member.id }}" aria-hidden="true">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title" id="linkUserModalLabel{{ member.id }}">Create New User Account for {{ member.fullName }}</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <form method="POST" action="{{ url_for('link_user_to_member', member_id=member.id) }}">
-                                                            {{ form.hidden_tag() }}
-                                                            <div class="mb-3">
-                                                                <label for="new_username_{{ member.id }}" class="form-label">New Username</label>
-                                                                <input type="text" class="form-control" id="new_username_{{ member.id }}" name="new_username" required>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label for="new_password_{{ member.id }}" class="form-label">New Password</label>
-                                                                <input type="password" class="form-control" id="new_password_{{ member.id }}" name="new_password" required>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label for="confirm_password_{{ member.id }}" class="form-label">Confirm New Password</label>
-                                                                <input type="password" class="form-control" id="confirm_password_{{ member.id }}" name="confirm_password" required>
-                                                            </div>
-                                                            <div class="d-flex justify-content-end gap-2">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                                <button type="submit" class="btn btn-primary">Create User</button>
-                                                            </div>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p class="text-center text-muted">No member profiles found.</p>
-                    {% endif %}
                 </div>
-            </div>
+            {% else %}
+                <p class="text-center text-muted mt-3">No registered users found.</p>
+            {% endif %}
         </div>
-    {% endif %}
+    </div>
 </div>
 
-<!-- Status Modal -->
-<div class="modal fade" id="viewStatusModal" tabindex="-1" aria-labelledby="viewStatusModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+{# Flash Messages Container - adjusted position #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="alert-container">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message | safe }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+{# Members Container (Bottom Half) #}
+<div class="fixed-panel-container members-container" id="membersContainer">
+    <div class="panel-header">
+        <h3 class="card-title">Member Profiles (Family Tree)</h3>
+    </div>
+    <div class="panel-content-scrollable">
+        <div class="card">
+            {% if members_with_status %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Full Name</th>
+                                <th>Linked User</th>
+                                <th>Messaging Enabled</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members_with_status %}
+                            <tr>
+                                <td>{{ member.id }}</td>
+                                <td>{{ member.fullName }}</td>
+                                <td>
+                                    {% if member.username %}
+                                        {{ member.username }}
+                                        {% if member.user_id == current_user.id %}<span class="badge bg-primary ms-1">You</span>{% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if member.user_id %}
+                                        <form action="{{ url_for('admin_toggle_messaging', member_id=member.id) }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm {% if member.can_message %}btn-success{% else %}btn-secondary{% endif %}">
+                                                {% if member.can_message %}Enabled{% else %}Disabled{% endif %}
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column flex-md-row gap-1">
+                                        <a href="{{ url_for('member_detail', member_id=member.id) }}" class="btn btn-sm btn-info">View</a>
+                                        <a href="{{ url_for('edit_member', member_id=member.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                        <form action="{{ url_for('delete_member', member_id=member.id) }}" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                        </form>
+                                        {# View Status Button #}
+                                        {% if member.status_file_path %}
+                                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#adminShowStatusModal"
+                                                    data-member-name="{{ member.fullName }}"
+                                                    data-file-path="{{ member.status_file_path }}"
+                                                    data-is-video="{{ member.status_is_video }}"
+                                                    data-expires-at="{{ moment(member.status_expires_at).calendar() }}"
+                                                    data-status-id="{{ member.status_id }}">
+                                                View Status
+                                            </button>
+                                        {% else %}
+                                            <button type="button" class="btn btn-sm btn-secondary" disabled>No Status</button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-center text-muted mt-3">No member profiles found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{# Admin Show Status Modal - moved outside panels for proper modal behavior #}
+<div class="modal fade" id="adminShowStatusModal" tabindex="-1" aria-labelledby="adminShowStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewStatusModalLabel">Status for <span id="statusMemberName"></span></h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title" id="adminShowStatusModalLabel">Status for <span id="statusMemberNameSpan"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="statusContent">Loading status...</div>
-                <div class="d-flex justify-content-between mt-3">
-                    <button type="button" class="btn btn-secondary" id="prevStatus" data-prev-status>Previous</button>
-                    <button type="button" class="btn btn-secondary" id="nextStatus" data-next-status>Next</button>
+                <div id="statusMediaContainer" class="text-center">
+                    <p id="statusLoadingMessage">Loading status...</p>
+                    <video id="statusVideoPlayer" controls class="img-fluid rounded shadow-sm" style="max-height: 500px; display: none;"></video>
+                    <img id="statusImagePlayer" class="img-fluid rounded shadow-sm" style="max-height: 500px; display: none;">
+                    <p id="statusMediaMessage" class="mt-2 text-muted"></p>
+                    <p id="statusMediaExpires" class="text-muted small"></p>
                 </div>
             </div>
             <div class="modal-footer">
-                <form method="POST" action="{{ url_for('delete_status', status_id=0) }}" id="deleteStatusForm" style="display: inline;">
-                    {{ form.hidden_tag() }}
-                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this status?')">Delete Status</button>
+                <form id="adminDeleteStatusForm" action="" method="POST" style="display:inline;">
+                    {# The form action will be set by JS when the modal is shown #}
+                    <button type="submit" class="btn btn-danger">Delete Status</button>
                 </form>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
@@ -216,53 +351,84 @@
 </div>
 
 <script>
-    // Status modal interaction (assumes API endpoint for fetching statuses)
-    document.querySelectorAll('[data-bs-target="#viewStatusModal"]').forEach(button => {
-        button.addEventListener('click', function() {
-            const memberId = this.getAttribute('data-member-id');
-            const memberName = this.getAttribute('data-member-name');
-            const statusContent = document.getElementById('statusContent');
-            const modalTitle = document.getElementById('viewStatusModalLabel').querySelector('span');
-            const deleteForm = document.getElementById('deleteStatusForm');
-            modalTitle.textContent = memberName;
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages (copied from base.html for consistency)
+        const flashMessages = document.querySelectorAll('.flash');
+        flashMessages.forEach(function(flash) {
+            setTimeout(function() {
+                flash.style.opacity = '0';
+                flash.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(function() {
+                    flash.remove();
+                }, 500);
+            }, 5000);
+        });
 
-            // Fetch statuses (placeholder for API call)
-            fetch(`/get_statuses/${memberId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.statuses && data.statuses.length > 0) {
-                        let currentIndex = 0;
-                        const updateStatus = () => {
-                            statusContent.innerHTML = `<video width="100%" controls><source src="${data.statuses[currentIndex].file_path}" type="video/mp4">Your browser does not support the video tag.</video>`;
-                            deleteForm.action = `/delete_status/${data.statuses[currentIndex].id}`;
-                            document.getElementById('prevStatus').disabled = currentIndex === 0;
-                            document.getElementById('nextStatus').disabled = currentIndex === data.statuses.length - 1;
-                        };
-                        updateStatus();
-                        document.getElementById('prevStatus').addEventListener('click', () => {
-                            if (currentIndex > 0) {
-                                currentIndex--;
-                                updateStatus();
-                            }
-                        });
-                        document.getElementById('nextStatus').addEventListener('click', () => {
-                            if (currentIndex < data.statuses.length - 1) {
-                                currentIndex++;
-                                updateStatus();
-                            }
-                        });
-                    } else {
-                        statusContent.textContent = 'No statuses found.';
-                        document.getElementById('deleteStatusForm').style.display = 'none';
-                    }
-                })
-                .catch(() => {
-                    statusContent.textContent = 'Error loading statuses.';
-                    document.getElementById('deleteStatusForm').style.display = 'none';
-                });
+        // Tooltips (for badge explaining expiry)
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Handle Admin Show Status Modal
+        const adminShowStatusModal = document.getElementById('adminShowStatusModal');
+        adminShowStatusModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget; // Button that triggered the modal
+            const memberName = button.getAttribute('data-member-name');
+            const filePath = button.getAttribute('data-file-path');
+            const isVideo = button.getAttribute('data-is-video') === '1';
+            const expiresAt = button.getAttribute('data-expires-at');
+            const statusId = button.getAttribute('data-status-id');
+
+            // Get modal elements
+            const statusMemberNameSpan = adminShowStatusModal.querySelector('#statusMemberNameSpan');
+            const statusLoadingMessage = adminShowStatusModal.querySelector('#statusLoadingMessage');
+            const statusVideoPlayer = adminShowStatusModal.querySelector('#statusVideoPlayer');
+            const statusImagePlayer = adminShowStatusModal.querySelector('#statusImagePlayer');
+            const statusMediaExpires = adminShowStatusModal.querySelector('#statusMediaExpires');
+            const adminDeleteStatusForm = adminShowStatusModal.querySelector('#adminDeleteStatusForm');
+
+            // Reset modal content
+            statusVideoPlayer.style.display = 'none';
+            statusImagePlayer.style.display = 'none';
+            statusLoadingMessage.style.display = 'block';
+            statusVideoPlayer.src = ''; // Clear source
+            statusImagePlayer.src = ''; // Clear source
+
+            // Set member name and expiry
+            statusMemberNameSpan.textContent = memberName;
+            statusMediaExpires.textContent = `Expires: ${expiresAt}`;
+
+            // Determine and display media
+            if (filePath) {
+                let mediaUrl;
+                if (isVideo) {
+                    mediaUrl = "{{ url_for('uploaded_video', filename='') }}" + filePath.split('/').pop();
+                    statusVideoPlayer.src = mediaUrl;
+                    statusVideoPlayer.style.display = 'block';
+                    statusVideoPlayer.load(); // Load video
+                    statusLoadingMessage.style.display = 'none';
+                } else {
+                    mediaUrl = "{{ url_for('uploaded_file', filename='') }}" + filePath.split('/').pop();
+                    statusImagePlayer.src = mediaUrl;
+                    statusImagePlayer.style.display = 'block';
+                    statusLoadingMessage.style.display = 'none';
+                }
+            } else {
+                statusLoadingMessage.textContent = 'No media found for this status.';
+            }
+
+            // Set the form action for deleting the status
+            adminDeleteStatusForm.action = "{{ url_for('delete_status_by_admin', status_id='') }}" + statusId;
+        });
+
+        // Pause video when modal is hidden
+        adminShowStatusModal.addEventListener('hide.bs.modal', function () {
+            const statusVideoPlayer = adminShowStatusModal.querySelector('#statusVideoPlayer');
+            if (statusVideoPlayer) {
+                statusVideoPlayer.pause();
+            }
         });
     });
 </script>
 {% endblock %}
-
-{% block footer %}{% endblock %}
