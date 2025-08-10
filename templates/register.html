@@ -30,12 +30,12 @@
                             <div id="usernameHelp" class="form-text">Enter a unique username.</div>
                         </div>
                         <div class="form-group mb-3">
-                            <label for="original_name" class="form-label">Your Original Name</label>
+                            <label for="original_name" class="form-label">Your Full Name</label>
                             <input type="text" class="form-control" id="original_name" name="original_name" required>
                         </div>
                         <div class="form-group mb-3">
-                            <label for="gender" class="form-label">Gender</label>
-                            <select class="form-select" id="gender" name="gender" required>
+                            <label for="gender" class="form-label">Gender (Optional)</label>
+                            <select class="form-select" id="gender" name="gender"> {# Removed 'required' #}
                                 <option value="" disabled selected>Select Gender</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
@@ -68,14 +68,28 @@ document.addEventListener("DOMContentLoaded", function () {
         const confirmPassword = document.getElementById('confirm_password').value.trim();
         const username = document.getElementById('username').value.trim();
         const originalName = document.getElementById('original_name').value.trim();
-        const gender = document.getElementById('gender').value;
+        // Gender is now optional, so no direct check here
 
-        if (!username || !originalName || !gender || !password || !confirmPassword) {
+        if (!username || !originalName || !password || !confirmPassword) { // Removed gender check
             event.preventDefault();
-            alert('Please fill in all required fields.');
+            // Using a custom modal/message box instead of alert
+            const messageBox = document.getElementById('messageBox');
+            if (!messageBox) { // Fallback if messageBox isn't universally available
+                alert('Please fill in all required fields (Username, Full Name, Password, Confirm Password).');
+            } else {
+                document.getElementById('messageText').textContent = 'Please fill in all required fields (Username, Full Name, Password, Confirm Password).';
+                messageBox.style.display = 'block';
+            }
         } else if (password !== confirmPassword) {
             event.preventDefault();
-            alert('Passwords do not match.');
+            // Using a custom modal/message box instead of alert
+            const messageBox = document.getElementById('messageBox');
+            if (!messageBox) { // Fallback
+                alert('Passwords do not match.');
+            } else {
+                document.getElementById('messageText').textContent = 'Passwords do not match.';
+                messageBox.style.display = 'block';
+            }
         }
     });
 });
