@@ -12,6 +12,6 @@
     }
   ],
   "env": {
-    "PYTHON_VERSION": "3.9.18" // Match your tested Python version
+    "PYTHON_VERSION": "3.13"
   }
 }
