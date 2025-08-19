@@ -517,11 +517,13 @@ def get_unread_messages_count():
             return 0
     return 0
 
+# ... (in get_unread_game_invite_count function)
+
 def get_unread_game_invite_count():
-    # Counts pending game invitations for the current user from Firestore
     if current_user.is_authenticated and firestore_db:
         try:
-            games_ref = firestore_db.collection(f'artifacts/{config.CANVAS_APP_ID}/public/games')
+            # CORRECTED FIRESTORE PATH: Now 5 elements, making 'games' a collection
+            games_ref = firestore_db.collection(f'artifacts/{config.CANVAS_APP_ID}/public/data/games')
 
             # Count games where current user is playerWhiteId and game is not over
             invites_as_white_query = games_ref.where('playerWhiteId', '==', str(current_user.id)).where('gameOver', '==', False).where('gameType', '==', 'human_vs_human')
@@ -533,13 +535,34 @@ def get_unread_game_invite_count():
             invites_as_black_docs = invites_as_black_query.stream()
             count_as_black = sum(1 for doc in invites_as_black_docs)
 
-            # Total unread invites are the sum of games where they are a participant and it's not over
             return count_as_white + count_as_black
         except Exception as e:
             print(f"Error getting unread game invite count from Firestore: {e}")
             return 0
     return 0
 
+# ... (further down in app.py, inside admin_manage_users route)
+
+        elif action == 'delete_user':
+            user_id_to_delete = request.form.get('user_id')
+            # ... (other checks)
+
+            # Delete game documents from Firestore where this user is player
+            if firestore_db:
+                # CORRECTED FIRESTORE PATH: Now 5 elements, making 'games' a collection
+                games_ref = firestore_db.collection(f'artifacts/{config.CANVAS_APP_ID}/public/data/games')
+                games_as_white = games_ref.where('playerWhiteId', '==', user_id_to_delete).stream()
+                for game_doc in games_as_white:
+                    game_doc.reference.delete()
+                    print(f"Deleted Firestore game {game_doc.id} (user was white).")
+
+                # CORRECTED FIRESTORE PATH: Now 5 elements, making 'games' a collection
+                games_as_black = games_ref.where('playerBlackId', '==', user_id_to_delete).stream()
+                for game_doc in games_as_black:
+                    game_doc.reference.delete()
+                    print(f"Deleted Firestore game {game_doc.id} (user was black).")
+
+        
 
 def cleanup_expired_videos():
     # Deletes expired status videos and their database entries
