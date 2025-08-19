@@ -1,141 +1,316 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script>{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block title %}Settings{% endblock %}
 
 {% block content %}
 <style>
-    .fixed-top.header {
-        top: 56px; /* Account for navbar height */
+    /* Ensure body padding for fixed elements */
+    body {
+        padding-top: 0; /* Reset base.html padding-top as we'll manage here */
+        padding-bottom: var(--footer-height); /* Space for fixed footer */
     }
-    .fixed-bottom-settings {
+
+    /* Fixed Top Container for Chat Background Settings */
+    .fixed-settings-top-container {
         position: fixed;
-        bottom: 60px; /* Adjust based on footer height */
-        z-index: 1000;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--background-color); /* Match page background */
+        color: var(--text-color);
+        padding: 15px 20px;
+        box-shadow: none; /* No shadow */
+        border: none; /* No border */
+        z-index: 1000; /* Ensure it's above scrollable content */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding-top: 70px; /* Space for main navbar */
+        padding-bottom: 20px; /* Padding at the bottom of this container */
+        border-bottom: 1px solid var(--card-border); /* Separator between fixed sections */
+    }
+
+    /* New style for the header with theme switch */
+    .settings-header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 600px; /* Match max-width of alert-container for consistency */
+        margin-bottom: 15px; /* Space below header */
+    }
+
+    .settings-header-container h2 {
+        margin-bottom: 0; /* Remove default margin */
+        flex-grow: 1; /* Allow title to take available space */
+        text-align: center; /* Center the title */
+    }
+
+    .fixed-settings-top-container h5 {
+        margin-top: 20px;
+        margin-bottom: 15px;
+        font-size: 1.2em;
+        text-align: center; /* Ensure "Chat Background" is centered */
+        width: 100%;
+    }
+
+    .fixed-settings-top-container .image-previews {
+        display: flex;
+        flex-direction: column; /* Stack images on mobile */
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        width: 100%;
+    }
+
+    .fixed-settings-top-container .image-previews .preview-item {
+        text-align: center;
+    }
+
+    .fixed-settings-top-container .image-previews img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 8px; /* Slightly rounded corners for preview images */
+        border: 1px solid var(--input-border);
+    }
+
+    .fixed-settings-top-container form {
+        width: 100%; /* Forms take full width */
+        max-width: 400px; /* Limit form width */
+        margin-left: auto;
+        margin-right: auto;
+        margin-bottom: 15px; /* Space between forms/buttons */
+    }
+
+    .fixed-settings-top-container .btn-group-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .fixed-settings-top-container .btn {
+        width: 100%; /* Buttons take full width of their container */
+        padding: 10px 15px;
+        border-radius: 8px;
+    }
+
+    /* Fixed Bottom Container for Account Actions */
+    .fixed-settings-bottom-container {
+        position: fixed;
+        bottom: var(--footer-height); /* Position above the fixed footer */
+        left: 0;
+        width: 100%;
+        background-color: var(--background-color); /* Match page background */
+        color: var(--text-color);
+        padding: 15px 20px;
+        box-shadow: none; /* No shadow */
+        border: none; /* No border */
+        z-index: 999; /* Below top fixed section, above footer */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        border-top: 1px solid var(--card-border); /* Separator from scrollable content */
+        padding-top: 20px;
+        padding-bottom: 20px;
+    }
+
+    .fixed-settings-bottom-container h5 {
+        margin-bottom: 15px;
+        font-size: 1.2em;
+        text-align: center;
+        width: 100%;
+    }
+
+    .fixed-settings-bottom-container .btn-group {
+        display: flex;
+        flex-wrap: wrap; /* Allow buttons to wrap */
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    /* Adjust content padding to avoid overlap with fixed sections */
+    .content {
+        padding-top: 0; /* Reset base.html padding-top */
+    }
+
+    /* Adjust alert container position */
+    .alert-container {
+        top: 70px; /* Default position, adjust if needed based on fixed header dynamic height */
+    }
+
+    /* Responsive adjustments */
+    @media (min-width: 768px) {
+        .fixed-settings-top-container {
+            padding-top: 70px; /* Maintain space for main navbar */
+            min-height: 250px; /* Adjust as needed for desktop */
+            justify-content: flex-start; /* Align content to top */
+        }
+        .fixed-settings-top-container .image-previews {
+            flex-direction: row; /* Align images side-by-side on desktop */
+            justify-content: center;
+        }
+        .fixed-settings-top-container .btn-group-vertical {
+            flex-direction: row; /* Buttons side-by-side */
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .fixed-settings-top-container .btn {
+            width: auto; /* Buttons can take natural width */
+            flex-grow: 1; /* Allow them to grow if space permits */
+        }
+
+        .fixed-settings-bottom-container {
+            position: relative; /* Make it relative on desktop, so it flows after top container */
+            border-top: none; /* No border if it's not fixed relative to viewport bottom */
+            padding-bottom: 0; /* No extra padding at bottom */
+            margin-top: 20px; /* Space from top container */
+        }
+        .fixed-settings-bottom-container .btn-group {
+            justify-content: center;
+        }
     }
 </style>
 
-<!-- Fixed Top Container -->
-<div class="container-fluid bg-light py-3 shadow-sm fixed-top header">
-    <div class="d-flex align-items-center justify-content-between">
-        <div></div> <!-- Empty div for flexbox balancing -->
-        <h2 class="mb-0 text-center">Account Settings</h2>
-        <div class="form-check form-switch ms-auto">
-            <input class="form-check-input" type="checkbox" id="darkModeSwitch" aria-label="Toggle Dark Mode">
-            <label class="form-check-label" for="darkModeSwitch">Dark Mode</label>
+{# Alerts will be positioned fixed, so they don't need to be in a container #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="alert-container">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message | safe }}</div>
+            {% endfor %}
         </div>
+    {% endif %}
+{% endwith %}
+
+{# Fixed Top Container: Account Settings & Chat Background #}
+<div class="fixed-settings-top-container">
+    <div class="settings-header-container">
+        {# Dark Mode Switch - Far Left #}
+        <div class="form-check form-switch me-auto"> {# ms-auto pushes it left #}
+            <input class="form-check-input" type="checkbox" id="themeSwitch" {% if g.user_theme == 'dark' %}checked{% endif %}>
+            <label class="form-check-label text-nowrap" for="themeSwitch">Dark Mode</label>
+        </div>
+        <h2 class="card-title text-center flex-grow-1">Account Settings</h2>
+        <div></div> {# Empty div to balance flexbox, if needed, or remove if not #}
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-container mb-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message | safe }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <h5>Chat Background</h5>
+    <div class="image-previews">
+        <div class="preview-item">
+            <p class="text-muted small mb-1">Current Chat Background:</p>
+            {# CORRECTED: Use the current_chat_background variable passed from Flask #}
+            {% if current_chat_background %}
+                <img src="{{ current_chat_background }}" alt="Current Chat Background">
+            {% else %}
+                <img src="{{ url_for('static', filename='img/default_chat_bg.jpg') }}" alt="Default Chat Background">
+            {% endif %}
+        </div>
+        <div class="preview-item">
+            <p class="text-muted small mb-1">Your Profile Photo:</p>
+            {# CORRECTED: Use url_for for profile_photo_path #}
+            {% if profile_photo_path %} {# Assuming profile_photo_path is passed from backend #}
+                <img src="{{ url_for('uploaded_file', filename=profile_photo_path) }}" alt="Your Profile Photo">
+            {% else %}
+                <img src="{{ url_for('static', filename='img/default_profile.png') }}" alt="Default Profile Photo">
+            {% endif %}
+        </div>
+    </div>
+
+    {# CORRECTED: Form action points to 'settings' #}
+    <form action="{{ url_for('settings') }}" method="POST" enctype="multipart/form-data" class="mb-3">
+        <div class="mb-3">
+            <label for="background_file" class="form-label">Upload New Background Image</label>
+            <input class="form-control" type="file" id="background_file" name="background_file" accept="image/*">
+            <small class="form-text text-muted">Max file size 5MB. Supported: PNG, JPG, JPEG, GIF.</small>
+        </div>
+        <button type="submit" name="action" value="upload" class="btn btn-primary me-2">Upload & Set</button>
+        <button type="submit" name="action" value="use_profile_photo" class="btn btn-info" {% if not profile_photo_path %}disabled{% endif %}>Use Profile Photo as Background</button>
+    </form>
+
+    <div class="btn-group-vertical">
+        {# CORRECTED: Form action points to 'settings' #}
+        <form action="{{ url_for('settings') }}" method="POST">
+            <button type="submit" name="action" value="clear" class="btn btn-secondary">Clear Background</button>
+        </form>
     </div>
 </div>
 
-<!-- Scrollable Content -->
-<div class="container mt-4" style="padding-top: 80px;">
-    {% if not current_user.is_authenticated %}
-        <div class="alert alert-warning text-center" role="alert">
-            Please <a href="{{ url_for('login') }}">log in</a> to access your settings.
-        </div>
-    {% else %}
-        <!-- Chat Background Section -->
-        <div class="card mb-4 shadow-sm">
-            <div class="card-body">
-                <h4 class="card-title">Chat Background</h4>
-                <div class="text-center">
-                    <img src="{% if g.user_chat_background %}{{ url_for('static', filename=g.user_chat_background) }}{% else %}{{ url_for('static', filename='img/default_background.jpg') }}{% endif %}" alt="Current Chat Background" class="img-fluid rounded mb-3" style="max-height: 200px;">
-                    <img src="{% if profile_photo_path %}{{ url_for('static', filename=profile_photo_path) }}{% else %}{{ url_for('static', filename='img/default_profile.png') }}{% endif %}" alt="Profile Photo" class="img-fluid rounded-circle mb-3" style="width: 50px; height: 50px;">
-                </div>
-                <form method="POST" action="{{ url_for('upload_chat_background') }}" enctype="multipart/form-data">
-                    {{ form.hidden_tag() }}
-                    <div class="mb-3">
-                        <label for="background_image" class="form-label">Upload New Background</label>
-                        <input type="file" class="form-control" id="background_image" name="background_image" accept="image/png,image/jpeg,image/gif" aria-describedby="backgroundHelp">
-                        <div id="backgroundHelp" class="form-text">Max file size 5MB. Supported: PNG, JPG, JPEG, GIF.</div>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <button type="submit" class="btn btn-primary">Upload & Set</button>
-                        <a href="{{ url_for('use_profile_photo_as_background') }}" class="btn btn-secondary">Use Profile Photo as Background</a>
-                    </div>
-                </form>
-                <form method="POST" action="{{ url_for('clear_chat_background') }}" class="mt-3">
-                    {{ form.hidden_tag() }}
-                    <button type="submit" class="btn btn-danger">Clear Background</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Account Actions Section -->
-        <div class="card mt-5 mb-5 shadow-sm">
-            <div class="card-body">
-                <h4 class="card-title">Account Actions</h4>
-                <div class="d-flex flex-column gap-2">
-                    <a href="{{ url_for('edit_profile') }}" class="btn btn-primary">Edit My Details</a>
-                    <a href="{{ url_for('change_password') }}" class="btn btn-primary">Change Password</a>
-                    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
-                </div>
-            </div>
-        </div>
-    {% endif %}
+{# Fixed Bottom Container: Account Actions #}
+<div class="fixed-settings-bottom-container">
+    <h5>Account Actions</h5>
+    <div class="btn-group">
+        {# Edit My Details button - NEW LOCATION #}
+        <a href="{{ url_for('add_my_details') }}" class="btn btn-warning">Edit My Details</a>
+        {# Link to a dedicated change password page #}
+        <a href="{{ url_for('change_password') }}" class="btn btn-info">Change Password</a>
+        {# Logout Button - next to Change Password #}
+        <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+    </div>
 </div>
 
-<!-- Fixed Bottom Container -->
-<div class="container-fluid bg-light py-3 shadow-sm fixed-bottom-settings"></div>
-
 <script>
-    // Dark Mode Toggle
-    document.getElementById('darkModeSwitch').addEventListener('change', function() {
-        document.body.classList.toggle('dark-mode', this.checked);
-        localStorage.setItem('darkMode', this.checked);
-    });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide flash messages
+        const flashMessages = document.querySelectorAll('.flash');
+        flashMessages.forEach(function(flash) {
+            setTimeout(function() {
+                flash.style.opacity = '0';
+                flash.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(function() {
+                    flash.remove();
+                }, 500);
+            }, 5000);
+        });
 
-    // Initialize dark mode from localStorage
-    if (localStorage.getItem('darkMode') === 'true') {
-        document.getElementById('darkModeSwitch').checked = true;
-        document.body.classList.add('dark-mode');
-    }
+        // Theme Switch Logic (Moved from base.html)
+        const themeSwitch = document.getElementById('themeSwitch');
+        if (themeSwitch) {
+            // Set initial state of switch based on body class, which base.html sets
+            const bodyThemeClass = document.body.className; // e.g., "light-theme" or "dark-theme"
+            const initialTheme = bodyThemeClass.includes('dark-theme') ? 'dark' : 'light';
 
-    // Position fixed-bottom container above footer
-    window.addEventListener('load', function() {
-        const footer = document.querySelector('footer');
-        const fixedBottom = document.querySelector('.fixed-bottom-settings');
-        if (footer && fixedBottom) {
-            const footerHeight = footer.offsetHeight;
-            fixedBottom.style.bottom = `${footerHeight}px`;
+            themeSwitch.checked = (initialTheme === 'dark');
+
+            themeSwitch.addEventListener('change', function() {
+                const theme = this.checked ? 'dark' : 'light';
+                document.body.className = theme + '-theme'; // Apply theme class to body
+
+                fetch('/update-theme-preference', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ theme: theme })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Theme updated:', data.message);
+                    // Optionally, show a temporary success message to the user
+                })
+                .catch(error => {
+                    console.error('Error updating theme:', error);
+                    // Optionally, show a temporary error message to the user
+                });
+            });
         }
     });
 </script>
