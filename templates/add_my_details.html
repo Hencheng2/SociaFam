@@ -10,51 +10,99 @@
 
 {% block content %}
 <style>
+    /* Ensure HTML and Body take full height and manage overflow */
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Crucial: Prevents main body scroll */
+    }
+
+    body {
+        display: flex; /* Use flexbox for main body layout */
+        flex-direction: column; /* Stack children vertically */
+        min-height: 100vh; /* Ensure body takes full viewport height */
+        background-color: var(--background-color); /* Match background */
+        color: var(--text-color); /* Match text color */
+    }
+
+    /* Fixed Top Container */
     .fixed-top-container {
         position: fixed;
-        top: 56px; /* Adjust for navbar height */
+        top: 0;
         left: 0;
         right: 0;
-        background-color: var(--secondary-bg);
+        background-color: var(--background-color);
         padding: 15px;
         z-index: 1000;
-        border-bottom: 1px solid var(--text-color);
+        border-bottom: 1px solid var(--card-border);
+        padding-top: 70px; /* Space for main navbar */
+        text-align: center;
     }
-    .fixed-bottom-container {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background-color: var(--secondary-bg);
-        padding: 10px;
-        z-index: 1000;
-        border-top: 1px solid var(--text-color);
+
+    .fixed-top-container h2 {
+        margin-bottom: 10px;
     }
-    .scrollable-content {
-        margin-top: 120px;
-        margin-bottom: 80px;
-        overflow-y: auto;
-        height: calc(100vh - 200px);
-        padding: 20px;
-    }
+
     .profile-photo-preview {
         width: 100px;
         height: 100px;
         object-fit: cover;
         border-radius: 50%;
         border: 2px solid var(--primary-color);
+        margin-bottom: 15px; /* Space below photo */
     }
-    .form-group.hidden {
-        display: none;
+
+    /* Scrollable Content */
+    .scrollable-content {
+        margin-top: 190px; /* Adjust based on fixed-top-container height */
+        margin-bottom: 80px; /* Space for fixed-bottom-container */
+        overflow-y: auto;
+        height: calc(100vh - 190px - 80px); /* Adjust calculation to fill space */
+        padding: 20px;
+        box-sizing: border-box; /* Include padding in height */
+        background-color: var(--background-color);
+        color: var(--text-color);
     }
+
+    /* Fixed Bottom Container */
+    .fixed-bottom-container {
+        position: fixed;
+        bottom: 0px;
+        left: 0px;
+        right: 0px;
+        background-color: var(--background-color);
+        padding: 10px;
+        z-index: 1000;
+        border-top: 1px solid var(--card-border);
+        display: flex; /* Use flex for button alignment */
+        justify-content: center; /* Center buttons */
+        align-items: center;
+        height: 60px; /* Set a fixed height */
+    }
+
+    .form-group.hidden { display: none; } /* Used by JS for conditional fields */
+
+    /* Responsive adjustments */
     @media (max-width: 768px) {
         .scrollable-content {
-            margin-top: 100px;
-            margin-bottom: 140px;
-            height: calc(100vh - 240px);
+            margin-top: 190px; /* Keep consistent with desktop if top fixed height is similar */
+            margin-bottom: 80px; /* Keep consistent */
+            height: calc(100vh - 190px - 80px);
         }
     }
 </style>
+
+{# Alerts will be positioned fixed, so they don't need to be in a container #}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="alert-container">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message | safe }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
 
 <!-- Fixed Top Container -->
 <div class="fixed-top-container text-center">
@@ -65,16 +113,19 @@
             Add My Personal Details
         {% endif %}
     </h2>
-    <img id="profile-photo-preview" src="{% if is_editing and user_details.profile_photo %}{{ url_for('static', filename='img/profile_photos/' + user_details.profile_photo) }}{% else %}{{ url_for('static', filename='img/default_profile.png') }}{% endif %}" alt="Profile Photo" class="profile-photo-preview">
+    <img id="profile-photo-preview"
+         src="{% if is_editing and user_details.profile_photo and user_details.profile_photo != 'static/img/default_profile.png' %}{{ url_for('uploaded_file', filename=user_details.profile_photo) }}{% else %}{{ url_for('static', filename='img/default_profile.png') }}{% endif %}"
+         alt="Profile Photo"
+         class="profile-photo-preview">
 </div>
 
 <!-- Scrollable Content -->
-<div class="scrollable-content">
+<div class="scrollable-content" id="scrollableContent"> {# Added ID for JS scrolling #}
     <form method="POST" action="{{ url_for('add_my_details') }}" enctype="multipart/form-data" id="add-my-details-form">
-        {{ form.hidden_tag() }}
+        {# Removed: {{ form.hidden_tag() }} #}
         <div class="mb-3">
             <label for="full_name" class="form-label">Full Name <span class="text-danger">*</span></label>
-            <input type="text" class="form-control" id="full_name" name="full_name" value="{% if is_editing and user_details %}{{ user_details.full_name }}{% elif current_user %}{{ current_user.originalName }}{% endif %}" required>
+            <input type="text" class="form-control" id="full_name" name="full_name" value="{% if is_editing and user_details %}{{ user_details.full_name }}{% elif current_user %}{{ current_user.originalName }}{% endif %}" required="">
         </div>
         <div class="mb-3">
             <label for="date_of_birth" class="form-label">Date of Birth</label>
@@ -82,8 +133,8 @@
         </div>
         <div class="mb-3">
             <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
-            <select class="form-select" id="gender" name="gender" required>
-                <option value="" disabled {% if not is_editing or not user_details or not user_details.gender %}selected{% endif %}>Select Gender</option>
+            <select class="form-select" id="gender" name="gender" required="">
+                <option value="" disabled="" {% if not is_editing or not user_details or not user_details.gender %}selected{% endif %}>Select Gender</option>
                 <option value="Male" {% if is_editing and user_details and user_details.gender == 'Male' %}selected{% endif %}>Male</option>
                 <option value="Female" {% if is_editing and user_details and user_details.gender == 'Female' %}selected{% endif %}>Female</option>
                 <option value="Other" {% if is_editing and user_details and user_details.gender == 'Other' %}selected{% endif %}>Other</option>
@@ -95,7 +146,7 @@
             <div class="mb-3">
                 <label for="marital_status" class="form-label">Marital Status</label>
                 <select class="form-select" id="marital_status" name="marital_status">
-                    <option value="" disabled {% if not is_editing or not user_details or not user_details.marital_status %}selected{% endif %}>Select Marital Status</option>
+                    <option value="" disabled="" {% if not is_editing or not user_details or not user_details.marital_status %}selected{% endif %}>Select Marital Status</option>
                     <option value="Single" {% if is_editing and user_details and user_details.marital_status == 'Single' %}selected{% endif %}>Single</option>
                     <option value="Engaged" {% if is_editing and user_details and user_details.marital_status == 'Engaged' %}selected{% endif %}>Engaged</option>
                     <option value="Married" {% if is_editing and user_details and user_details.marital_status == 'Married' %}selected{% endif %}>Married</option>
@@ -105,28 +156,28 @@
             </div>
 
             <!-- Spouse Name (Conditional based on marital status) -->
-            <div class="mb-3 spouses-field hidden">
+            <div class="mb-3 spouses-field hidden"> {# This will be shown only for 'Married' #}
                 <label for="spouse_names" class="form-label">Spouse Name(s) (comma-separated)</label>
-                <input type="text" class="form-control" id="spouse_names" name="spouse_names" placeholder="e.g., Jane Doe, John Smith" value="{% if is_editing and user_details %}{{ user_details.spouse_names }}{% endif %}">
+                <input type="text" class="form-control" id="spouse_names" name="spouse_names" placeholder="e.g., Jane Doe, John Smith" value="{% if is_editing and user_details %}{{ user_details.spouse_names | join(', ') if user_details.spouse_names is iterable else user_details.spouse_names }}{% endif %}">
             </div>
 
             <!-- Fiancée Name (Conditional based on marital status) -->
-            <div class="mb-3 fiance-field hidden">
+            <div class="mb-3 fiance-field hidden"> {# This will be shown only for 'Engaged' #}
                 <label for="fiance_names" class="form-label">Fiancé(e) Name(s) (comma-separated)</label>
-                <input type="text" class="form-control" id="fiance_names" name="fiance_names" placeholder="e.g., Alex Green" value="{% if is_editing and user_details %}{{ user_details.fiance_names }}{% endif %}">
+                <input type="text" class="form-control" id="fiance_names" name="fiance_names" placeholder="e.g., Alex Green" value="{% if is_editing and user_details %}{{ user_details.fiance_names | join(', ') if user_details.fiance_names is iterable else user_details.fiance_names }}{% endif %}">
             </div>
         </div>
 
         <!-- Children Names (Conditional based on age/marital status) -->
         <div id="childrenSection" class="mb-3 form-group hidden">
             <label for="children_names" class="form-label">Children Name(s) (comma-separated)</label>
-            <input type="text" class="form-control" id="children_names" name="children_names" placeholder="e.g., Child One, Child Two" value="{% if is_editing and user_details %}{{ user_details.children_names }}{% endif %}">
+            <input type="text" class="form-control" id="children_names" name="children_names" placeholder="e.g., Child One, Child Two" value="{% if is_editing and user_details %}{{ user_details.children_names | join(', ') if user_details.children_names is iterable else user_details.children_names }}{% endif %}">
         </div>
 
         <!-- Education Section (Conditional based on age) -->
         <div id="educationSection" class="form-group hidden">
-            <button type="button" class="btn btn-secondary btn-sm mb-3" id="addSchoolButton">Add School</button>
-            <div id="schoolFields" class="form-group hidden">
+            <button type="button" class="btn btn-secondary btn-sm mb-3" id="addSchoolButton" style="display: none;">Add School</button>
+            <div id="schoolFields" class="form-group">
                 <div class="mb-3">
                     <label for="education_level" class="form-label">Education Level</label>
                     <select class="form-select" id="education_level" name="education_level">
@@ -136,7 +187,7 @@
                         <option value="University" {% if is_editing and user_details and user_details.education_level == 'University' %}selected{% endif %}>University</option>
                     </select>
                 </div>
-                <div class="mb-3" id="institution_container" style="display: none;">
+                <div class="mb-3" id="institution_container" style="display: block;">
                     <label for="institution_name" class="form-label">Institution Name</label>
                     <input type="text" class="form-control" id="institution_name" name="institution_name" value="{% if is_editing and user_details %}{{ user_details.institution_name }}{% endif %}">
                 </div>
@@ -164,7 +215,9 @@
         <div class="mb-3">
             <label for="profile_photo" class="form-label">Profile Photo</label>
             <input type="file" class="form-control" id="profile_photo" name="profile_photo" accept="image/*">
+            <small class="form-text text-muted">Upload a new photo to replace the current one.</small>
         </div>
+        {# REMOVED: Remove Profile Photo checkbox and its associated logic #}
     </form>
 </div>
 
@@ -174,114 +227,160 @@
     <a href="{{ url_for('my_profile') }}" class="btn btn-secondary">Cancel</a>
 </div>
 
-<script>
+{% endblock %}
+
+{% block footer %}{% endblock %} {# This explicitly hides the footer on this page #}
+
+{% block scripts %}
+<script type="text/javascript">
     document.addEventListener('DOMContentLoaded', function() {
-        const dobInput = document.getElementById('date_of_birth');
+        const dateOfBirthInput = document.getElementById('date_of_birth');
         const maritalStatusSection = document.getElementById('maritalStatusSection');
+        const childrenSection = document.getElementById('childrenSection');
+        const educationSection = document.getElementById('educationSection');
         const maritalStatusSelect = document.getElementById('marital_status');
         const spousesField = document.querySelector('.spouses-field');
         const fianceField = document.querySelector('.fiance-field');
-        const childrenSection = document.getElementById('childrenSection');
-
-        const educationSection = document.getElementById('educationSection');
-        const addSchoolButton = document.getElementById('addSchoolButton');
-        const schoolFields = document.getElementById('schoolFields');
         const educationLevelSelect = document.getElementById('education_level');
-        const institutionNameGroup = document.getElementById('institution_container'); // Corrected ID
+        const institutionContainer = document.getElementById('institution_container');
+        const profilePhotoInput = document.getElementById('profile_photo');
+        const profilePhotoPreview = document.getElementById('profile-photo-preview');
+        const fullNameInput = document.getElementById('full_name');
+        const genderSelect = document.getElementById('gender');
+        const scrollableContent = document.getElementById('scrollableContent'); // Get the scrollable div
 
-        // Profile Photo Preview
-        document.getElementById('profile_photo').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('profile-photo-preview').src = e.target.result;
-                };
-                reader.readAsDataURL(file);
+        // Initial check on load
+        updateConditionalSections();
+        updateSpouseFianceFields();
+        updateEducationInstitutionField();
+
+        // Scroll to the bottom of the content after initial render/updates
+        // Use a slight delay to ensure all content and JS renders have settled
+        setTimeout(() => {
+            if (scrollableContent) {
+                scrollableContent.scrollTop = scrollableContent.scrollHeight;
             }
-        });
+        }, 100);
 
-        function calculateAge(dobString) {
-            if (!dobString) return null;
-            const dob = new Date(dobString);
+
+        // Event Listeners
+        dateOfBirthInput.addEventListener('change', updateConditionalSections);
+        maritalStatusSelect.addEventListener('change', updateSpouseFianceFields);
+        educationLevelSelect.addEventListener('change', updateEducationInstitutionField);
+        profilePhotoInput.addEventListener('change', previewProfilePhoto);
+
+        // Function to calculate age
+        function calculateAge(dob) {
+            const birthDate = new Date(dob);
             const today = new Date();
-            let age = today.getFullYear() - dob.getFullYear();
-            const monthDiff = today.getMonth() - dob.getMonth();
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const m = today.getMonth() - birthDate.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
                 age--;
             }
             return age;
         }
 
-        function updateFormVisibility() {
-            const age = calculateAge(dobInput.value);
+        // Function to update visibility of sections based on age
+        function updateConditionalSections() {
+            const dob = dateOfBirthInput.value;
+            if (dob) {
+                const age = calculateAge(dob);
+                // Marital Status & Children sections visible for 18+
+                if (age >= 18) {
+                    maritalStatusSection.classList.remove('hidden');
+                    childrenSection.classList.remove('hidden');
+                } else {
+                    maritalStatusSection.classList.add('hidden');
+                    childrenSection.classList.add('hidden');
+                    // Reset values if hidden to avoid sending old data
+                    maritalStatusSelect.value = '';
+                    document.getElementById('children_names').value = '';
+                }
+                // Education section visible for 6+
+                if (age >= 6) {
+                    educationSection.classList.remove('hidden');
+                } else {
+                    educationSection.classList.add('hidden');
+                    // Reset values if hidden
+                    educationLevelSelect.value = 'None';
+                    document.getElementById('institution_name').value = '';
+                }
+            } else {
+                // If DOB is empty, hide all conditional sections
+                maritalStatusSection.classList.add('hidden');
+                childrenSection.classList.add('hidden');
+                educationSection.classList.add('hidden');
+                // Reset all related fields
+                maritalStatusSelect.value = '';
+                document.getElementById('children_names').value = '';
+                educationLevelSelect.value = 'None';
+                document.getElementById('institution_name').value = '';
+            }
+            // Always run spouse/fiance and education updates after conditional sections
+            updateSpouseFianceFields();
+            updateEducationInstitutionField();
+        }
 
-            // Hide all conditional sections initially
-            maritalStatusSection.classList.add('hidden');
+        // Function to update visibility of spouse/fiance fields
+        function updateSpouseFianceFields() {
+            const maritalStatus = maritalStatusSelect.value;
             spousesField.classList.add('hidden');
             fianceField.classList.add('hidden');
-            childrenSection.classList.add('hidden');
-            educationSection.classList.add('hidden');
-            schoolFields.classList.add('hidden'); // Hide school fields by default
-            institutionNameGroup.style.display = 'none'; // Hide institution name by default
-            addSchoolButton.style.display = 'block'; // Show the "Add School" button by default
+            // Clear values when hidden
+            document.getElementById('spouse_names').value = '';
+            document.getElementById('fiance_names').value = '';
 
-            // Logic for age-based visibility
-            if (age !== null && age >= 18) {
-                maritalStatusSection.classList.remove('hidden');
-                childrenSection.classList.remove('hidden'); // Children field always shown if >=18
-                educationSection.classList.remove('hidden'); // Education section always shown if >=18
-
-                // Logic for marital status-based visibility
-                const maritalStatus = maritalStatusSelect.value;
-                if (maritalStatus === 'Married') {
-                    spousesField.classList.remove('hidden');
-                } else if (maritalStatus === 'Engaged') {
-                    fianceField.classList.remove('hidden');
-                }
-            } else if (age !== null && age < 18) {
-                 // For <18, only education is optionally shown (if 'Add School' is clicked)
-                 educationSection.classList.remove('hidden');
+            // Crucial Adjustment: Spouse field only for 'Married'
+            if (maritalStatus === 'Married') {
+                spousesField.classList.remove('hidden');
             }
-
-            // Always ensure school name is hidden if no education level is selected
-            if (educationLevelSelect.value === '' || educationLevelSelect.value === 'None') {
-                institutionNameGroup.style.display = 'none';
-            } else {
-                institutionNameGroup.style.display = 'block';
-            }
-
-            // If school fields were already visible (e.g., due to existing data on load)
-            const initialEducationLevel = '{{ user_details.education_level | default("None") }}';
-            if (initialEducationLevel !== 'None' && initialEducationLevel !== '') {
-                schoolFields.classList.remove('hidden');
-                addSchoolButton.style.display = 'none';
-                institutionNameGroup.style.display = 'block';
+            // Crucial Adjustment: Fiance field only for 'Engaged'
+            else if (maritalStatus === 'Engaged') {
+                fianceField.classList.remove('hidden');
             }
         }
 
-        // Event listeners
-        dobInput.addEventListener('change', updateFormVisibility);
-        maritalStatusSelect.addEventListener('change', updateFormVisibility);
-        educationLevelSelect.addEventListener('change', function() {
-            if (this.value === '' || this.value === 'None') {
-                institutionNameGroup.style.display = 'none';
+        // Function to update visibility of institution name field
+        function updateEducationInstitutionField() {
+            if (educationLevelSelect.value === 'None') {
+                institutionContainer.style.display = 'none';
+                document.getElementById('institution_name').value = ''; // Clear value
             } else {
-                institutionNameGroup.style.display = 'block';
+                institutionContainer.style.display = 'block';
             }
-        });
+        }
 
-        addSchoolButton.addEventListener('click', function() {
-            schoolFields.classList.remove('hidden');
-            addSchoolButton.style.display = 'none';
-            // If an option is already selected that requires an institution name, show it
-            if (educationLevelSelect.value !== '' && educationLevelSelect.value !== 'None') {
-                institutionNameGroup.style.display = 'block';
+        // Function to preview selected profile photo
+        function previewProfilePhoto() {
+            const file = profilePhotoInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    profilePhotoPreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // If no file selected, revert to default or current saved photo
+                profilePhotoPreview.src = profilePhotoPreview.dataset.initialSrc;
             }
-        });
+        }
+        // Store initial src on the image element itself for dynamic revert
+        profilePhotoPreview.dataset.initialSrc = profilePhotoPreview.src;
 
-        // Initial setup on page load
-        updateFormVisibility(); // Call once on load for initial state
+        {# REMOVED: Remove Profile Photo checkbox event listener #}
+
+        // Auto-hide flash messages (copied from base.html for consistency)
+        const flashMessages = document.querySelectorAll('.alert-container .alert');
+        flashMessages.forEach(function(flash) {
+            setTimeout(function() {
+                flash.style.opacity = '0';
+                flash.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(function() {
+                    flash.remove();
+                }, 500);
+            }, 5000);
+        });
     });
 </script>
 {% endblock %}
