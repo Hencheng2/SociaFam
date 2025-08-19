@@ -12,7 +12,7 @@
                 {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message | safe }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <small class="text-muted d-block">{{ moment(conv.timestamp).fromNow() }}</small>
                     </div>
                 {% endfor %}
             </div>
