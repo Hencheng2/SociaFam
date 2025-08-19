@@ -23,20 +23,21 @@
                 <div class="card-body text-center">
                     <h2 class="card-title mb-4">Register</h2>
                     <form method="POST" action="{{ url_for('register') }}" id="register-form">
-                        {{ form.hidden_tag() }}
+                        {# Removed: {{ form.hidden_tag() }} as 'form' object is not defined #}
                         <div class="form-group mb-3">
                             <label for="username" class="form-label">Choose a Username</label>
                             <input type="text" class="form-control" id="username" name="username" required aria-describedby="usernameHelp">
                             <div id="usernameHelp" class="form-text">Enter a unique username.</div>
                         </div>
                         <div class="form-group mb-3">
-                            <label for="original_name" class="form-label">Your Full Name</label>
-                            <input type="text" class="form-control" id="original_name" name="original_name" required>
+                            <label for="original_name" class="form-label">Full Name</label>
+                            <input type="text" class="form-control" id="original_name" name="original_name" required aria-describedby="originalNameHelp">
+                            <div id="originalNameHelp" class="form-text">Your full name.</div>
                         </div>
                         <div class="form-group mb-3">
                             <label for="gender" class="form-label">Gender (Optional)</label>
-                            <select class="form-select" id="gender" name="gender"> {# Removed 'required' #}
-                                <option value="" disabled selected>Select Gender</option>
+                            <select class="form-select" id="gender" name="gender">
+                                <option value="">Select Gender</option>
                                 <option value="Male">Male</option>
                                 <option value="Female">Female</option>
                                 <option value="Other">Other</option>
@@ -68,28 +69,14 @@ document.addEventListener("DOMContentLoaded", function () {
         const confirmPassword = document.getElementById('confirm_password').value.trim();
         const username = document.getElementById('username').value.trim();
         const originalName = document.getElementById('original_name').value.trim();
-        // Gender is now optional, so no direct check here
+        const gender = document.getElementById('gender').value;
 
-        if (!username || !originalName || !password || !confirmPassword) { // Removed gender check
+        if (!username || !originalName || !password || !confirmPassword) { // Gender is optional, removed from here
             event.preventDefault();
-            // Using a custom modal/message box instead of alert
-            const messageBox = document.getElementById('messageBox');
-            if (!messageBox) { // Fallback if messageBox isn't universally available
-                alert('Please fill in all required fields (Username, Full Name, Password, Confirm Password).');
-            } else {
-                document.getElementById('messageText').textContent = 'Please fill in all required fields (Username, Full Name, Password, Confirm Password).';
-                messageBox.style.display = 'block';
-            }
+            showMessageBox('Please fill in all required fields (Username, Full Name, Password, Confirm Password).'); // Using custom message box
         } else if (password !== confirmPassword) {
             event.preventDefault();
-            // Using a custom modal/message box instead of alert
-            const messageBox = document.getElementById('messageBox');
-            if (!messageBox) { // Fallback
-                alert('Passwords do not match.');
-            } else {
-                document.getElementById('messageText').textContent = 'Passwords do not match.';
-                messageBox.style.display = 'block';
-            }
+            showMessageBox('Passwords do not match.'); // Using custom message box
         }
     });
 });
