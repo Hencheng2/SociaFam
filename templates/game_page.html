@@ -1,106 +1,62 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block title %}Game Library{% endblock %}
 
 {% block content %}
-<style>
-    .fixed-top.header {
-        top: 56px; /* Account for navbar height */
-    }
-</style>
+<div class="container mx-auto px-4 py-8">
+    <div class="text-center mb-12 relative">
+        <h1 class="text-5xl font-extrabold text-blue-500 tracking-tight mb-2">Game Library</h1>
+        <p class="text-lg text-gray-400">Choose a game to play with friends</p>
+    </div>
 
-<!-- Fixed Top Header -->
-<div class="container-fluid bg-light py-3 shadow-sm fixed-top header">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb justify-content-center mb-2">
-            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Game Library</li>
-        </ol>
-    </nav>
-    <h2 class="mb-4 text-center">Game Library</h2>
-    <p class="text-center text-muted">Choose a game to play with friends.</p>
-</div>
-
-<!-- Games Section -->
-<div class="container mt-4" style="padding-top: 100px;">
-    {% if not current_user.is_authenticated %}
-        <div class="alert alert-warning text-center" role="alert">
-            Please <a href="{{ url_for('login') }}">log in</a> to access the game library.
-        </div>
-    {% else %}
-        <div class="row justify-content-center">
-            <!-- Racing Game -->
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm">
-                    <img src="{{ url_for('static', filename='img/racing_game.jpg') }}" class="card-img-top" alt="Racing Game Image">
-                    <div class="card-body">
-                        <h4 class="card-title text-center">Racing Game</h4>
-                        <p class="card-text">Experience the thrill of high-speed racing. Compete against others or challenge yourself on various tracks.</p>
-                        <a href="{{ url_for('racing_game') }}" class="btn btn-primary">Play Racing Game</a>
-                    </div>
+    <div class="grid gap-8 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Racing Game Card -->
+        <div class="bg-gray-800 rounded-2xl shadow-xl overflow-hidden transform transition duration-300 hover:scale-105 hover:shadow-2xl">
+            <div class="relative h-5 overflow-hidden">
+                <!-- Racing Game Icon -->
+                <div class="w-full h-full flex items-center justify-center bg-gray-900">
+                    <i class="fas fa-car text-white text-4xl"></i>
                 </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                <div class="absolute bottom-1 left-2 text-white text-lg font-bold">Racing Game</div>
             </div>
-
-            <!-- Chess -->
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm">
-                    <img src="{{ url_for('static', filename='img/chess.jpg') }}" class="card-img-top" alt="Chess Image">
-                    <div class="card-body">
-                        <h4 class="card-title text-center">Chess</h4>
-                        <p class="card-text">A timeless game of strategy and tactics. Compete against a friend or the computer to checkmate your opponent’s king.</p>
-                        <a href="{{ url_for('solo_chess') }}" class="btn btn-primary">Play Chess (Solo AI)</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Board Games -->
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm">
-                    <img src="{{ url_for('static', filename='img/board_games.jpg') }}" class="card-img-top" alt="Board Games Image">
-                    <div class="card-body">
-                        <h4 class="card-title text-center">Board Games</h4>
-                        <p class="card-text">A collection of various classic and modern board games for you and your family to enjoy together.</p>
-                        <a href="{{ url_for('board_games') }}" class="btn btn-primary">Play Board Games</a>
-                    </div>
-                </div>
+            <div class="p-6">
+                <p class="text-gray-400 mb-4">Experience the thrill of high-speed racing. Compete against others or challenge yourself on various tracks.</p>
+                <a href="{{ url_for('play_game', game_name='racing') }}" class="block w-full bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl text-center transition duration-300 hover:bg-blue-700">Play Racing Game</a>
             </div>
         </div>
-    {% endif %}
-</div>
 
-<!-- JS Dependencies -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="{{ url_for('static', filename='js/game.js') }}"></script>
-{% endblock %}
-                        <h4 class="card-title text-center">Racing Game</h4>
-                        <p class="card-text">Experience the thrill of high-speed racing. Compete against others or challenge yourself on various tracks.</p>
-                        <a href="{{ url_for('racing_game') }}" class="btn btn-primary">Play Racing Game</a>
-                    </div>
+        <!-- Chess Game Card -->
+        <div class="bg-gray-800 rounded-2xl shadow-xl overflow-hidden transform transition duration-300 hover:scale-105 hover:shadow-2xl">
+            <div class="relative h-5 overflow-hidden">
+                <!-- Chess Game Icon -->
+                <div class="w-full h-full flex items-center justify-center bg-gray-900">
+                    <i class="fas fa-chess text-white text-4xl"></i>
                 </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                <div class="absolute bottom-1 left-2 text-white text-lg font-bold">Chess</div>
             </div>
-            <!-- Chess -->
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm">
-                    <img src="{{ url_for('static', filename='img/chess.jpg') }}" class="card-img-top" alt="Chess Image">
-                    <div class="card-body">
-                        <h4 class="card-title text-center">Chess</h4>
-                        <p class="card-text">A timeless game of strategy and tactics. Compete against a friend or the computer to checkmate your opponent’s king.</p>
-                        <a href="{{ url_for('solo_chess') }}" class="btn btn-primary">Play Chess (Solo AI)</a>
-                    </div>
-                </div>
-            </div>
-            <!-- Board Games -->
-            <div class="col-md-4 mb-4">
-                <div class="card shadow-sm">
-                    <img src="{{ url_for('static', filename='img/board_games.jpg') }}" class="card-img-top" alt="Board Games Image">
-                    <div class="card-body">
-                        <h4 class="card-title text-center">Board Games</h4>
-                        <p class="card-text">A collection of various classic and modern board games for you and your family to enjoy together.</p>
-                        <a href="{{ url_for('board_games') }}" class="btn btn-primary">Play Board Games</a>
-                    </div>
-                </div>
+            <div class="p-6">
+                <p class="text-gray-400 mb-4">A timeless game of strategy and tactics. Compete against a friend or the computer to checkmate your opponent's king.</p>
+                <a href="{{ url_for('play_game', game_name='chess') }}" class="block w-full bg-indigo-600 text-white font-semibold py-3 px-4 rounded-xl text-center transition duration-300 hover:bg-indigo-700">Play Chess (Solo AI)</a>
             </div>
         </div>
-    {% endif %}
+
+        <!-- Board Games Card -->
+        <div class="bg-gray-800 rounded-2xl shadow-xl overflow-hidden transform transition duration-300 hover:scale-105 hover:shadow-2xl">
+            <div class="relative h-20 overflow-hidden">
+                <!-- Board Games Icon -->
+                <div class="w-full h-full flex items-center justify-center bg-gray-900">
+                    <i class="fas fa-dice text-white text-4xl"></i>
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-transparent"></div>
+                <div class="absolute bottom-1 left-2 text-white text-lg font-bold">Board Games</div>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-400 mb-4">A collection of various classic and modern board games for you and your family to enjoy together.</p>
+                <a href="{{ url_for('play_game', game_name='board_games') }}" class="block w-full bg-green-600 text-white font-semibold py-3 px-4 rounded-xl text-center transition duration-300 hover:bg-green-700">Play Board Games</a>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
