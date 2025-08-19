@@ -1,79 +1,122 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
 <div class="container mt-5">
-    {% if not current_user.is_authenticated %}
-        <div class="alert alert-warning text-center" role="alert">
-            Please <a href="{{ url_for('login') }}">log in</a> to view your dashboard.
-        </div>
-    {% else %}
-        <!-- Dashboard Header -->
-        <h1 class="text-center mb-4">Your Dashboard</h1>
+    <h1 class="mb-4 text-center">Your Dashboard</h1>
 
-        <!-- Profile Section -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h4 class="card-title">Profile</h4>
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card p-4 shadow mb-4">
+                <h3 class="card-title text-center mb-3">My Profile</h3>
                 {% if user_member_profile %}
-                    <div class="d-flex align-items-center">
-                        <img src="{{ url_for('static', filename=user_member_profile.profilePhoto if user_member_profile.profilePhoto else 'img/default_profile.png') }}" class="rounded-circle" style="width: 100px; height: 100px;" alt="User profile photo">
-                        <div class="ms-3">
-                            <p class="mb-0">{{ user_member_profile.fullName }}</p>
-                            <p class="mb-0">{{ user_member_profile.association }}</p>
-                            <a href="{{ url_for('my_profile') }}" class="btn btn-primary mt-2">View My Profile</a>
-                        </div>
+                    <div class="text-center mb-3">
+                        {% if user_member_profile.profilePhoto %}
+                            <img src="/{{ user_member_profile.profilePhoto }}" alt="{{ user_member_profile.fullName }} Profile Photo" class="img-thumbnail rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='img/default_profile.png') }}" alt="Default Profile" class="img-thumbnail rounded-circle mb-2" style="width: 100px; height: 100px; object-fit: cover;">
+                        {% endif %}
+                        <p class="lead mb-1"><strong>{{ user_member_profile.fullName }}</strong></p>
+                        <p class="text-muted">{{ user_member_profile.association }}</p>
+                        <a href="{{ url_for('my_profile') }}" class="btn btn-primary btn-sm">View My Profile</a>
                     </div>
                 {% else %}
-                    <p class="text-center text-muted">You haven't completed your profile yet. <a href="{{ url_for('add_my_details') }}" class="btn btn-primary">Add your details here</a>.</p>
+                    <p class="text-center">You haven't added your personal details yet.</p>
+                    <div class="text-center">
+                        <a href="{{ url_for('add_my_details') }}" class="btn btn-warning">Add My Details</a>
+                    </div>
                 {% endif %}
             </div>
         </div>
+    </div>
 
-        <!-- Games Section -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-body">
-                <h4 class="card-title">Games</h4>
-                <p class="card-text">Ready for some fun? Explore our game library!</p>
-                <a href="{{ url_for('game_page') }}" class="btn btn-primary">Go to Game Library</a>
-            </div>
-        </div>
-
-        <!-- Family Members Section -->
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <h4 class="card-title">Other Family Members</h4>
-                {% if other_users_members and other_users_members|length > 0 %}
-                    <table class="table table-striped table-hover">
-                        <thead>
-                            <tr>
-                                <th>Photo</th>
-                                <th>Name</th>
-                                <th>Association</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for member in other_users_members %}
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card p-4 shadow mb-4">
+                <h3 class="card-title mb-3">Members I Added</h3>
+                {% if my_added_members %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Photo</th>
+                                    <th>Name</th>
+                                    <th>Association</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in my_added_members %}
                                 <tr>
                                     <td>
-                                        <img src="{{ url_for('static', filename=member.profilePhoto if member.profilePhoto else 'img/default_profile.png') }}" class="rounded-circle" style="width: 50px; height: 50px;" alt="Profile photo">
+                                        {% if member.profilePhoto %}
+                                            <img src="/{{ member.profilePhoto }}" alt="{{ member.fullName }}" class="img-thumbnail rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                            <img src="{{ url_for('static', filename='img/default_profile.png') }}" alt="Default" class="img-thumbnail rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% endif %}
                                     </td>
                                     <td>{{ member.fullName }}</td>
                                     <td>{{ member.association }}</td>
                                     <td>
-                                        <a href="{{ url_for('member_detail', member_id=member.id) }}" class="btn btn-primary btn-sm">View Profile</a>
+                                        <a href="{{ url_for('member_detail', member_id=member.id) }}" class="btn btn-sm btn-info me-2">View</a>
+                                        <a href="{{ url_for('edit_member', member_id=member.id) }}" class="btn btn-sm btn-warning">Edit</a>
                                     </td>
                                 </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 {% else %}
-                    <p class="text-center text-muted">No users found yet.</p>
+                    <p class="text-center">You haven't added any other family members yet.</p>
+                {% endif %}
+                <div class="text-center mt-3">
+                    <a href="{{ url_for('add_member_form') }}" class="btn btn-success">Add New Member</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card p-4 shadow">
+                <h3 class="card-title mb-3">Other Family Members</h3>
+                {% if other_users_members %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Photo</th>
+                                    <th>Name</th>
+                                    <th>Association</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in other_users_members %}
+                                <tr>
+                                    <td>
+                                        {% if member.profilePhoto %}
+                                            <img src="/{{ member.profilePhoto }}" alt="{{ member.fullName }}" class="img-thumbnail rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% else %}
+                                            <img src="{{ url_for('static', filename='img/default_profile.png') }}" alt="Default" class="img-thumbnail rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ member.fullName }}</td>
+                                    <td>{{ member.association }}</td>
+                                    <td>
+                                        <a href="{{ url_for('member_detail', member_id=member.id) }}" class="btn btn-sm btn-info">View Profile</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-center">No other family members found yet.</p>
                 {% endif %}
             </div>
         </div>
-    {% endif %}
+    </div>
 </div>
 {% endblock %}
