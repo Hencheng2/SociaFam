@@ -3,164 +3,64 @@
 {% block title %}Admin - Manage Users{% endblock %}
 
 {% block content %}
-
 <style>
-    /* Fixed Panel Container */
-    .fixed-panel-container {
-        position: fixed;
-        left: 0;
-        width: 100%;
-        background-color: var(--background-color);
-        box-shadow: none;
-        border: none;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-        padding: 0 20px; /* Consistent horizontal padding */
-    }
+    @charset "utf-8";
 
-    /* Top panel for Users */
-    .users-container {
-        top: 70px; /* Below the main navbar */
-        height: calc(50vh - 35px); /* Approximately top half, accounting for navbar */
-        border-bottom: 1px solid var(--card-border);
-        z-index: 999;
-    }
+    .fixed-panel-container { position: fixed; left: 0px; width: 100%; background-color: var(--background-color); box-shadow: none; border: none; box-sizing: border-box; display: flex; flex-direction: column; padding: 0px 20px; }
 
-    /* Bottom panel for Members */
-    .members-container {
-        bottom: 0;
-        height: calc(50vh - 35px); /* Approximately bottom half, accounting for footer/navbar space */
-        border-top: 1px solid var(--card-border);
-        z-index: 998;
-    }
+    .users-container { top: 70px; height: calc(-35px + 50vh); border-bottom: 1px solid var(--card-border); z-index: 999; }
 
-    .panel-header {
-        flex-shrink: 0; /* Prevent header from shrinking */
-        padding: 15px 0 10px 0; /* Adjusted padding, horizontal handled by container */
-        background-color: var(--background-color);
-        border-bottom: 1px solid var(--card-border);
-        box-sizing: border-box;
-    }
+    .members-container { bottom: 0px; height: calc(-35px + 50vh); border-top: 1px solid var(--card-border); z-index: 998; }
 
-    .panel-content-scrollable {
-        flex-grow: 1; /* Allow content to fill remaining space */
-        overflow-y: auto; /* Enable vertical scrolling */
-        padding-bottom: 20px; /* Padding at the bottom of scrollable area */
-        position: relative; /* For positioning child elements */
-    }
+    .panel-header { flex-shrink: 0; padding: 15px 0px 10px; background-color: var(--background-color); border-bottom: 1px solid var(--card-border); box-sizing: border-box; }
 
-    .fixed-panel-container h1 {
-        font-size: 1.6em;
-        margin-bottom: 8px;
-    }
+    .panel-content-scrollable { flex-grow: 1; overflow-y: auto; padding-bottom: 20px; position: relative; }
 
-    .fixed-panel-container h3 {
-        font-size: 1.1em;
-        margin-bottom: 0;
-    }
+    .fixed-panel-container h1 { font-size: 1.6em; margin-bottom: 8px; }
 
-    /* Table Styling */
-    .table {
-        color: var(--text-color);
-        margin-bottom: 0;
-        width: 100%; /* Ensure table takes full width of its container */
-        table-layout: auto; /* Allow columns to size based on content */
-    }
+    .fixed-panel-container h3 { font-size: 1.1em; margin-bottom: 0px; }
 
-    .table th {
-        background-color: var(--header-bg);
-        color: var(--header-text);
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        font-size: 0.75em;
-        padding: 8px;
-        text-align: left; /* Align header text to left */
-    }
+    .table { color: var(--text-color); margin-bottom: 0px; width: 100%; table-layout: auto; }
 
-    .table td {
-        vertical-align: middle;
-        font-size: 0.7em;
-        padding: 8px;
-    }
+    .table th { background-color: var(--header-bg); color: var(--header-text); position: sticky; top: 0px; z-index: 10; font-size: 0.75em; padding: 8px; text-align: left; }
 
-    .table-hover tbody tr:hover {
-        background-color: var(--hover-bg);
-    }
+    .table td { vertical-align: middle; font-size: 0.7em; padding: 8px; }
 
-    .card {
-        background-color: transparent; /* Make card background transparent */
-        border: none; /* Remove card border */
-        box-shadow: none; /* Remove card shadow */
-        margin-bottom: 0;
-    }
+    .table-hover tbody tr:hover { background-color: var(--hover-bg); }
 
-    /* Flash Messages Container */
-    .alert-container {
-        position: fixed;
-        top: 70px; /* Below navbar */
-        left: 50%;
-        transform: translateX(-50%);
-        width: 90%;
-        max-width: 600px;
-        z-index: 1050;
-        text-align: center;
-        padding-top: 10px; /* Small gap from top */
-    }
-    .alert {
-        margin-bottom: 10px; /* Space between multiple alerts */
-    }
+    .card { background-color: transparent; border: none; box-shadow: none; margin-bottom: 0px; }
 
+    .alert-container { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 600px; z-index: 1050; text-align: center; padding-top: 10px; }
 
-    /* Modal Specific Styles (from original file) */
+    .alert { margin-bottom: 10px; }
+
     .modal.fade.show { overflow: hidden auto; z-index: 99999 !important; display: block !important; visibility: visible !important; opacity: 1 !important; position: fixed !important; top: 0px !important; left: 0px !important; width: 100vw !important; height: 100vh !important; transform: none !important; }
+
     .modal-backdrop.fade.show { z-index: 99998 !important; opacity: 0.5 !important; position: fixed !important; }
+
     .modal-dialog { z-index: 99999 !important; position: relative !important; transform: none !important; }
+
     .modal-content { z-index: 99999 !important; position: relative !important; }
 
-    /* In-page overlay for linking user (might not be used but keeping styles) */
-    .in-page-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.6); z-index: 100; visibility: hidden; opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
+    .in-page-overlay { position: absolute; top: 0px; left: 0px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: rgba(0, 0, 0, 0.6); z-index: 100; visibility: hidden; opacity: 0; transition: opacity 0.3s, visibility 0.3s; }
+
     .in-page-overlay.show { visibility: visible; opacity: 1; }
+
     .in-page-overlay .modal-content { position: relative; z-index: 101; background-color: var(--card-bg); color: var(--text-color); border: 1px solid var(--card-border); border-radius: 0.5rem; box-shadow: rgba(0, 0, 0, 0.15) 0px 0.5rem 1rem; max-width: 500px; width: 90%; margin: auto; }
 
-    /* Buttons in table */
-    .table .btn {
-        font-size: 0.7em;
-        padding: 4px 8px;
-        white-space: nowrap; /* Prevent button text from wrapping */
-    }
+    .table .btn { font-size: 0.7em; padding: 4px 8px; white-space: nowrap; }
 
-    /* Responsive adjustments */
     @media (min-width: 768px) {
-        .fixed-panel-container {
-            padding: 0 30px;
-        }
-        .panel-header {
-            padding: 20px 0 10px 0;
-        }
-        .panel-content-scrollable {
-            padding-bottom: 30px;
-        }
-        .fixed-panel-container h1 {
-            font-size: 2em;
-        }
-        .fixed-panel-container h3 {
-            font-size: 1.4em;
-        }
-        .table th {
-            font-size: 0.85em;
-        }
-        .table td {
-            font-size: 0.8em;
-        }
-        .table .btn {
-            font-size: 0.75em;
-            padding: 5px 10px;
-        }
+    .fixed-panel-container { padding: 0px 30px; }
+    .panel-header { padding: 20px 0px 10px; }
+    .panel-content-scrollable { padding-bottom: 30px; }
+    .fixed-panel-container h1 { font-size: 1.6em; margin-bottom: 8px; }
+    .fixed-panel-container h3 { font-size: 1.1em; margin-bottom: 0px; }
+    .table th { font-size: 0.85em; }
+    .table td { font-size: 0.8em; }
+    .table .btn { font-size: 0.75em; padding: 5px 10px; }
     }
 </style>
-
 
 {# Users Container (Top Half) #}
 <div class="fixed-panel-container users-container" id="usersContainer">
@@ -187,38 +87,41 @@
                             {% for user in users %}
                                 {# Exclude admin users and AdminAI from this list #}
                                 {% if not user.is_admin and user.username != 'AdminAI' %}
-                                <tr>
-                                    <td>{{ user.id }}</td>
-                                    <td>{{ user.username }}</td>
-                                    <td>{{ user.originalName }}</td>
-                                    <td>{{ user.unique_key }}</td>
-                                    <td>
-                                        {% if user.password_reset_pending == 1 %}
-                                            <span class="badge bg-warning text-dark">Pending</span>
-                                            <span class="badge bg-info ms-1" data-bs-toggle="tooltip" title="Expires: {{ moment(user.reset_request_timestamp).add(60, 'minutes').calendar() }}">Expires</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">No</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="d-flex flex-column flex-md-row gap-1">
-                                            {# Initiate Password Reset Request (Admin actions it) #}
-                                            {% if user.password_reset_pending == 0 %}
-                                                <form action="{{ url_for('admin_initiate_reset', user_id=user.id) }}" method="POST" style="display:inline;">
-                                                    <button type="submit" class="btn btn-sm btn-warning">Initiate Reset</button>
-                                                </form>
+                                    <tr>
+                                        <td>{{ user.id }}</td>
+                                        <td>{{ user.username }}</td>
+                                        <td>{{ user.originalName }}</td>
+                                        <td>{{ user.unique_key }}</td>
+                                        <td>
+                                            {% if user.password_reset_pending == 1 %}
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                                <span class="badge bg-info ms-1" data-bs-toggle="tooltip" title="Expires: {{ moment(user.reset_request_timestamp).add(60, 'minutes').calendar() }}">Expires</span>
                                             {% else %}
-                                                <button type="button" class="btn btn-sm btn-success" disabled>Reset Initiated</button>
+                                                <span class="badge bg-secondary">No</span>
                                             {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column flex-md-row gap-1">
+                                                {# Initiate Password Reset Request #}
+                                                {% if user.password_reset_pending == 0 %}
+                                                    <form action="{{ url_for('admin_manage_users') }}" method="POST" style="display:inline;">
+                                                        <input type="hidden" name="action" value="initiate_password_reset">
+                                                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                        <button type="submit" class="btn btn-sm btn-warning">Initiate Reset</button>
+                                                    </form>
+                                                {% else %}
+                                                    <button type="button" class="btn btn-sm btn-success" disabled="">Reset Initiated</button>
+                                                {% endif %}
 
-                                            {# Delete User Account #}
-                                            <form action="{{ url_for('admin_delete_user', user_id=user.id) }}" method="POST" style="display:inline;">
-                                                <button type="submit" class="btn btn-sm btn-danger"
-                                                        {% if user.id == current_user.id %}disabled title="Cannot delete your own account"{% endif %}>Delete</button>
-                                            </form>
-                                        </div>
-                                    </td>
-                                </tr>
+                                                {# Delete User Account #}
+                                                <form action="{{ url_for('admin_manage_users') }}" method="POST" style="display:inline;">
+                                                    <input type="hidden" name="action" value="delete_user">
+                                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-danger" {% if user.id == current_user.id %}disabled="" title="Cannot delete your own account"{% endif %}>Delete</button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 {% endif %}
                             {% endfor %}
                         </tbody>
@@ -266,51 +169,48 @@
                         </thead>
                         <tbody>
                             {% for member in members_with_status %}
-                            <tr>
-                                <td>{{ member.id }}</td>
-                                <td>{{ member.fullName }}</td>
-                                <td>
-                                    {% if member.username %}
-                                        {{ member.username }}
-                                        {% if member.user_id == current_user.id %}<span class="badge bg-primary ms-1">You</span>{% endif %}
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if member.user_id %}
-                                        <form action="{{ url_for('admin_toggle_messaging', member_id=member.id) }}" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-sm {% if member.can_message %}btn-success{% else %}btn-secondary{% endif %}">
-                                                {% if member.can_message %}Enabled{% else %}Disabled{% endif %}
-                                            </button>
-                                        </form>
-                                    {% else %}
-                                        N/A
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="d-flex flex-column flex-md-row gap-1">
-                                        <a href="{{ url_for('member_detail', member_id=member.id) }}" class="btn btn-sm btn-info">View</a>
-                                        <a href="{{ url_for('edit_member', member_id=member.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                        <form action="{{ url_for('delete_member', member_id=member.id) }}" method="POST" style="display:inline;">
-                                            <button type="submit" class="btn btn-sm btn-danger">Delete</button>
-                                        </form>
-                                        {# View Status Button #}
-                                        {% if member.status_file_path %}
-                                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#adminShowStatusModal"
-                                                    data-member-name="{{ member.fullName }}"
-                                                    data-file-path="{{ member.status_file_path }}"
-                                                    data-is-video="{{ member.status_is_video }}"
-                                                    data-expires-at="{{ moment(member.status_expires_at).calendar() }}"
-                                                    data-status-id="{{ member.status_id }}">
-                                                View Status
-                                            </button>
+                                <tr>
+                                    <td>{{ member.id }}</td>
+                                    <td>{{ member.fullName }}</td>
+                                    <td>
+                                        {% if member.username %}
+                                            {{ member.username }}
+                                            {% if member.user_id == current_user.id %}<span class="badge bg-primary ms-1">You</span>{% endif %}
                                         {% else %}
-                                            <button type="button" class="btn btn-sm btn-secondary" disabled>No Status</button>
+                                            N/A
                                         {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
+                                    </td>
+                                    <td>
+                                        {% if member.user_id %}
+                                            <form action="{{ url_for('admin_manage_users') }}" method="POST" style="display:inline;">
+                                                <input type="hidden" name="action" value="toggle_login_access">
+                                                <input type="hidden" name="member_id" value="{{ member.id }}">
+                                                <button type="submit" class="btn btn-sm {% if member.can_message %}btn-success{% else %}btn-secondary{% endif %}">
+                                                    {% if member.can_message %}Enabled{% else %}Disabled{% endif %}
+                                                </button>
+                                            </form>
+                                        {% else %}
+                                            N/A
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-column flex-md-row gap-1">
+                                            <a href="{{ url_for('member_detail', member_id=member.id) }}" class="btn btn-sm btn-info">View</a>
+                                            <a href="{{ url_for('edit_member', member_id=member.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                            <form action="{{ url_for('delete_member', member_id=member.id) }}" method="POST" style="display:inline;">
+                                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                            </form>
+                                            {# View Status Button #}
+                                            {% if member.status_file_path %}
+                                                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#adminShowStatusModal" data-member-name="{{ member.fullName }}" data-file-path="{{ member.status_file_path }}" data-is-video="{{ member.status_is_video }}" data-expires-at="{{ moment(member.status_expires_at).calendar() }}" data-status-id="{{ member.status_id }}" data-status-owner="{{ member.fullName }}">
+                                                    View Status
+                                                </button>
+                                            {% else %}
+                                                <button type="button" class="btn btn-sm btn-secondary" disabled="">No Status</button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -333,14 +233,14 @@
             <div class="modal-body">
                 <div id="statusMediaContainer" class="text-center">
                     <p id="statusLoadingMessage">Loading status...</p>
-                    <video id="statusVideoPlayer" controls class="img-fluid rounded shadow-sm" style="max-height: 500px; display: none;"></video>
+                    <video id="statusVideoPlayer" controls="" class="img-fluid rounded shadow-sm" style="max-height: 500px; display: none;"></video>
                     <img id="statusImagePlayer" class="img-fluid rounded shadow-sm" style="max-height: 500px; display: none;">
                     <p id="statusMediaMessage" class="mt-2 text-muted"></p>
                     <p id="statusMediaExpires" class="text-muted small"></p>
                 </div>
             </div>
             <div class="modal-footer">
-                <form id="adminDeleteStatusForm" action="" method="POST" style="display:inline;">
+                <form id="adminDeleteStatusForm" action="#" method="POST" style="display:inline;"> {# Changed action to # to prevent Jinja2 build error #}
                     {# The form action will be set by JS when the modal is shown #}
                     <button type="submit" class="btn btn-danger">Delete Status</button>
                 </form>
@@ -350,10 +250,13 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Auto-hide flash messages (copied from base.html for consistency)
-        const flashMessages = document.querySelectorAll('.flash');
+        // Auto-hide flash messages
+        const flashMessages = document.querySelectorAll('.alert-container .alert');
         flashMessages.forEach(function(flash) {
             setTimeout(function() {
                 flash.style.opacity = '0';
@@ -364,71 +267,64 @@
             }, 5000);
         });
 
-        // Tooltips (for badge explaining expiry)
-        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-          return new bootstrap.Tooltip(tooltipTriggerEl)
-        });
-
-        // Handle Admin Show Status Modal
+        // JavaScript for handling the Admin Show Status Modal
         const adminShowStatusModal = document.getElementById('adminShowStatusModal');
-        adminShowStatusModal.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget; // Button that triggered the modal
-            const memberName = button.getAttribute('data-member-name');
-            const filePath = button.getAttribute('data-file-path');
-            const isVideo = button.getAttribute('data-is-video') === '1';
-            const expiresAt = button.getAttribute('data-expires-at');
-            const statusId = button.getAttribute('data-status-id');
+        if (adminShowStatusModal) {
+            adminShowStatusModal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget; // Button that triggered the modal
+                const memberName = button.getAttribute('data-member-name');
+                const filePath = button.getAttribute('data-file-path');
+                const isVideo = button.getAttribute('data-is-video') === 'True' || button.getAttribute('data-is-video') === '1';
+                const expiresAt = button.getAttribute('data-expires-at');
+                const statusId = button.getAttribute('data-status-id');
 
-            // Get modal elements
-            const statusMemberNameSpan = adminShowStatusModal.querySelector('#statusMemberNameSpan');
-            const statusLoadingMessage = adminShowStatusModal.querySelector('#statusLoadingMessage');
-            const statusVideoPlayer = adminShowStatusModal.querySelector('#statusVideoPlayer');
-            const statusImagePlayer = adminShowStatusModal.querySelector('#statusImagePlayer');
-            const statusMediaExpires = adminShowStatusModal.querySelector('#statusMediaExpires');
-            const adminDeleteStatusForm = adminShowStatusModal.querySelector('#adminDeleteStatusForm');
+                // Get modal elements
+                const statusMemberNameSpan = adminShowStatusModal.querySelector('#statusMemberNameSpan');
+                const statusLoadingMessage = adminShowStatusModal.querySelector('#statusLoadingMessage');
+                const statusVideoPlayer = adminShowStatusModal.querySelector('#statusVideoPlayer');
+                const statusImagePlayer = adminShowStatusModal.querySelector('#statusImagePlayer');
+                const statusMediaExpires = adminShowStatusModal.querySelector('#statusMediaExpires');
+                const adminDeleteStatusForm = document.getElementById('adminDeleteStatusForm');
 
-            // Reset modal content
-            statusVideoPlayer.style.display = 'none';
-            statusImagePlayer.style.display = 'none';
-            statusLoadingMessage.style.display = 'block';
-            statusVideoPlayer.src = ''; // Clear source
-            statusImagePlayer.src = ''; // Clear source
+                // Reset modal content
+                statusLoadingMessage.style.display = 'block';
+                statusVideoPlayer.style.display = 'none';
+                statusImagePlayer.style.display = 'none';
+                statusVideoPlayer.src = '';
+                statusImagePlayer.src = '';
+                statusMemberNameSpan.textContent = memberName || 'Member';
+                statusMediaExpires.textContent = `Expires: ${expiresAt}`;
 
-            // Set member name and expiry
-            statusMemberNameSpan.textContent = memberName;
-            statusMediaExpires.textContent = `Expires: ${expiresAt}`;
+                // Set the action for the delete form dynamically - THIS IS THE CHANGE
+                // It now directly constructs the URL using JavaScript template literals
+                adminDeleteStatusForm.action = `/admin/delete_status_by_admin/${statusId}`;
 
-            // Determine and display media
-            if (filePath) {
-                let mediaUrl;
-                if (isVideo) {
-                    mediaUrl = "{{ url_for('uploaded_video', filename='') }}" + filePath.split('/').pop();
-                    statusVideoPlayer.src = mediaUrl;
-                    statusVideoPlayer.style.display = 'block';
-                    statusVideoPlayer.load(); // Load video
+
+                // Load media
+                if (filePath) {
+                    if (isVideo) {
+                        statusVideoPlayer.src = filePath;
+                        statusVideoPlayer.style.display = 'block';
+                        statusVideoPlayer.load(); // Load the video
+                    } else {
+                        statusImagePlayer.src = filePath;
+                        statusImagePlayer.style.display = 'block';
+                    }
                     statusLoadingMessage.style.display = 'none';
                 } else {
-                    mediaUrl = "{{ url_for('uploaded_file', filename='') }}" + filePath.split('/').pop();
-                    statusImagePlayer.src = mediaUrl;
-                    statusImagePlayer.style.display = 'block';
-                    statusLoadingMessage.style.display = 'none';
+                    statusLoadingMessage.textContent = "No media available.";
                 }
-            } else {
-                statusLoadingMessage.textContent = 'No media found for this status.';
-            }
+            });
 
-            // Set the form action for deleting the status
-            adminDeleteStatusForm.action = "{{ url_for('delete_status_by_admin', status_id='') }}" + statusId;
-        });
-
-        // Pause video when modal is hidden
-        adminShowStatusModal.addEventListener('hide.bs.modal', function () {
-            const statusVideoPlayer = adminShowStatusModal.querySelector('#statusVideoPlayer');
-            if (statusVideoPlayer) {
-                statusVideoPlayer.pause();
-            }
-        });
+            // Pause video when modal is hidden
+            adminShowStatusModal.addEventListener('hidden.bs.modal', function () {
+                const statusVideoPlayer = adminShowStatusModal.querySelector('#statusVideoPlayer');
+                if (statusVideoPlayer) {
+                    statusVideoPlayer.pause();
+                    statusVideoPlayer.currentTime = 0; // Reset video to start
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
