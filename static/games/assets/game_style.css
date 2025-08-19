@@ -1,0 +1,115 @@
+/* General body styling for the game page */
+body {
+    margin: 0;
+    overflow: hidden; /* Hide scrollbars if the canvas takes full screen */
+    background-color: #222; /* Dark background for a game feel */
+    font-family: Arial, sans-serif;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure body takes full viewport height */
+}
+
+/* Header styling */
+header {
+    background-color: #333;
+    padding: 10px 20px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 10; /* Ensure header is above game canvas if needed */
+}
+
+header h1 {
+    margin: 0;
+    color: #00bcd4; /* A light blue for emphasis */
+}
+
+header p {
+    margin: 5px 0 0;
+    font-size: 0.9em;
+    color: #bbb;
+}
+
+/* Main game container */
+main {
+    flex-grow: 1; /* Allows main to take up available space */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center content horizontally */
+    justify-content: center; /* Center content vertically */
+    position: relative; /* For positioning UI elements over canvas */
+}
+
+/* Styling for the 3D game canvas */
+#gameCanvas {
+    display: block; /* Remove extra space below canvas */
+    border: 2px solid #00bcd4; /* A border to highlight the game area */
+    background-color: #000; /* Fallback background for canvas */
+    width: 100vw;  /* Take full viewport width */
+    height: 100vh; /* Take full viewport height */
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Game UI overlay styling */
+#gameUI {
+    position: absolute; /* Position over the canvas */
+    top: 20px;
+    left: 20px;
+    background-color: rgba(0, 0, 0, 0.7); /* Semi-transparent black */
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    z-index: 5; /* Ensure UI is above canvas */
+    color: #fff;
+    font-size: 1.1em;
+}
+
+#gameUI p {
+    margin: 5px 0;
+}
+
+#gameUI span {
+    font-weight: bold;
+    color: #00bcd4; /* Match header H1 color */
+}
+
+#gameUI button {
+    background-color: #4CAF50; /* Green button */
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+}
+
+#gameUI button:hover {
+    background-color: #45a049;
+}
+
+/* Footer styling */
+footer {
+    background-color: #333;
+    padding: 10px 20px;
+    text-align: center;
+    font-size: 0.8em;
+    color: #aaa;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.5);
+    z-index: 10; /* Ensure footer is above game canvas if needed */
+}
+
+/* Basic responsiveness for smaller screens (optional but good practice) */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.5em;
+    }
+    #gameUI {
+        top: 10px;
+        left: 10px;
+        padding: 10px;
+        font-size: 0.9em;
+    }
+}
