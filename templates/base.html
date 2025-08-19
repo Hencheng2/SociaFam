@@ -1,319 +1,297 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}SociaFam{% endblock %}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SociaFam23{% endblock %}</title>
 
-  <!-- Bootstrap 5.3.0 CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Font Awesome -->
-  <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.0.0-beta3/css/all.min.css" rel="stylesheet">
-  <!-- Custom CSS -->
-  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
-  <!-- Moment.js -->
-  <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
-  <!-- jQuery -->
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-  <!-- React + Babel -->
-  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.20.6/babel.min.js"></script>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <!-- Your custom stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
-  <style>
-    :root {
-      --primary-bg: #ffffff;
-      --secondary-bg: #f8f9fa;
-      --text-color: #333333;
-      --primary-color: #007bff;
-      --navbar-bg: #343a40;
-      --footer-bg: #343a40;
-      --link-color: #ffffff;
-    }
-
-    [data-theme="dark"] {
-      --primary-bg: #212529;
-      --secondary-bg: #343a40;
-      --text-color: #e9ecef;
-      --primary-color: #0d6efd;
-      --navbar-bg: #1a1d20;
-      --footer-bg: #1a1d20;
-      --link-color: #adb5bd;
-    }
-
-    body {
-      background-color: var(--primary-bg);
-      color: var(--text-color);
-    }
-
-    .navbar, .footer {
-      background-color: var(--navbar-bg);
-    }
-
-    .navbar-nav .nav-link {
-      color: var(--link-color) !important;
-    }
-
-    .footer a {
-      color: var(--link-color);
-    }
-
-    .flash-message {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 1050;
-    }
-
-    .mobile-footer {
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      .mobile-footer {
-        display: flex;
-        background-color: var(--footer-bg);
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        justify-content: space-around;
-        padding: 10px 0;
-      }
-
-      .mobile-footer a {
-        color: var(--link-color);
-        text-align: center;
-      }
-    }
-
-    .chat-modal .modal-body {
-      max-height: 400px;
-      overflow-y: auto;
-    }
-
-    .user-message {
-      background-color: var(--primary-color);
-      color: white;
-      border-radius: 15px 15px 0 15px;
-      margin-left: 20%;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-
-    .ai-message {
-      background-color: var(--secondary-bg);
-      color: var(--text-color);
-      border-radius: 15px 15px 15px 0;
-      margin-right: 20%;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-
-    .loading-indicator {
-      text-align: center;
-      padding: 10px;
-    }
-  </style>
-</head>
-<body data-theme="light">
-  <!-- Navigation Bar -->
-  <nav class="navbar navbar-expand-lg fixed-top">
-    <div class="container-fluid">
-      <a class="navbar-brand text-white" href="{{ url_for('index') }}">SociaFam</a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav ms-auto">
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Home</a></li>
-          <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('inbox') }}">
-              Inbox
-              {% if current_user.is_authenticated and unread_count > 0 %}
-                <span class="badge bg-danger">{{ unread_count }}</span>
-              {% endif %}
-            </a>
-          </li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('members_list') }}">Members</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('status_feed') }}">Status</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('game_page') }}">Games</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('settings') }}">Settings</a></li>
-          <li class="nav-item"><a class="nav-link" href="{{ url_for('my_profile') }}">Profile</a></li>
-          {% if current_user.is_authenticated and current_user.is_admin %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_manage_users') }}">Admin Panel</a></li>
-          {% endif %}
-          {% if current_user.is_authenticated %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
-          {% else %}
-            <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}">Login</a></li>
-          {% endif %}
-          <li class="nav-item">
-            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#aiChatModal">
-              <i class="fas fa-robot"></i> AI Chat
-            </a>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <!-- Flash Messages -->
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="alert alert-{{ category }} flash-message" role="alert">
-          {{ message }}
-        </div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
-
-  <!-- Page Content -->
-  <main class="container my-5">
-    {% block content %}{% endblock %}
-  </main>
-
-  <!-- Footer -->
-  <footer class="footer text-white text-center py-3">
-    <p>&copy; 2025 SociaFam. All rights reserved.</p>
-  </footer>
-
-  <!-- Mobile Footer -->
-  <div class="mobile-footer">
-    <a href="{{ url_for('index') }}"><i class="fas fa-home"></i> Home</a>
-    <a href="{{ url_for('inbox') }}">
-      <i class="fas fa-envelope"></i> Inbox
-      {% if current_user.is_authenticated and unread_count > 0 %}
-        <span class="badge bg-danger">{{ unread_count }}</span>
-      {% endif %}
-    </a>
-    <a href="{{ url_for('game_page') }}"><i class="fas fa-gamepad"></i> Games</a>
-    <a href="{{ url_for('my_profile') }}"><i class="fas fa-user"></i> Profile</a>
-  </div>
-
-  <!-- AI Chat Modal -->
-  <div class="modal fade" id="aiChatModal" tabindex="-1" aria-labelledby="aiChatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="aiChatModalLabel">AI Chat</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          <div id="chat-container"></div>
-        </div>
-        <div class="modal-footer">
-          <input type="text" id="chat-input" class="form-control" placeholder="Type your message...">
-          <button type="button" id="send-message" class="btn btn-primary">Send</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Flash + Chat Scripts -->
-  <script>
-    $(document).ready(function () {
-      setTimeout(function () {
-        $('.flash-message').fadeOut('slow');
-      }, 4000);
-    });
-
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-    firebase.initializeApp(firebaseConfig);
-
-    const Chat = () => {
-      const [messages, setMessages] = React.useState([]);
-      const [user, setUser] = React.useState(null);
-      const [loading, setLoading] = React.useState(false);
-
-      React.useEffect(() => {
-        firebase.auth().onAuthStateChanged((currentUser) => {
-          setUser(currentUser);
-          if (currentUser) {
-            const db = firebase.firestore();
-            db.collection('chats').doc(currentUser.uid).collection('messages')
-              .orderBy('timestamp')
-              .onSnapshot((snapshot) => {
-                const fetchedMessages = snapshot.docs.map(doc => doc.data());
-                setMessages(fetchedMessages);
-              });
-          }
-        });
-      }, []);
-
-      window.sendMessage = async () => {
-        if (!user) {
-          alert('Please log in to use the chat.');
-          return;
+    <style>
+        /* General layout for HTML and Body */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
-        const input = document.getElementById('chat-input');
-        const message = input.value.trim();
-        if (!message) return;
 
-        setLoading(true);
-        const db = firebase.firestore();
-        await db.collection('chats').doc(user.uid).collection('messages').add({
-          text: message,
-          sender: 'user',
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Ensure body takes full viewport height */
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
 
-        setTimeout(async () => {
-          await db.collection('chats').doc(user.uid).collection('messages').add({
-            text: 'This is a sample AI response.',
-            sender: 'ai',
-            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-          });
-          setLoading(false);
-          input.value = '';
-        }, 1000);
-      };
+        /* Root CSS Variables for Theming */
+        :root {
+            --background-color: #f8f9fa; /* Light mode background */
+            --text-color: #212529;      /* Light mode text */
+            --card-bg: #ffffff;
+            --card-border: #dee2e6;
+            --primary-color: #007bff; /* Bootstrap primary blue */
+            --primary-color-dark: #0056b3;
+            --primary-color-light: #b8daff;
+            --secondary-text-color: #6c757d;
+            --input-bg: #e9ecef;
+            --header-bg: #343a40;
+            --header-text: #ffffff;
+            --hover-bg: #e2e6ea;
+            --sent-message-bg: #dcf8c6; /* Light green for sent messages */
+            --sent-message-text: #000000;
+            --received-message-bg: #e9e9eb; /* Light grey for received messages */
+            --received-message-text: #000000;
+            --ai-message-bg: #ffeeba; /* Light yellow for AI messages */
+            --ai-message-text: #000000;
+            /* Added success color variable for custom elements if needed */
+            --success-color: #28a745; /* Standard Bootstrap success green */
+            --success-color-dark: #218838;
+        }
 
-      return (
-        <div>
-          {user ? (
-            <div>
-              {messages.map((msg, i) => (
-                <div key={i} className={msg.sender === 'user' ? 'user-message' : 'ai-message'}>
-                  <p>{msg.text}</p>
-                  <small>{moment(msg.timestamp?.toDate()).format('MMM D, YYYY h:mm A')}</small>
-                </div>
-              ))}
-              {loading && <div className="loading-indicator">Loading...</div>}
+        .dark-theme {
+            --background-color: #343a40; /* Dark mode background */
+            --text-color: #f8f9fa;      /* Dark mode text */
+            --card-bg: #495057;
+            --card-border: #6c757d;
+            --primary-color: #66afe9; /* Dark mode primary blue */
+            --primary-color-dark: #4a8edc;
+            --primary-color-light: #3a6b9d;
+            --secondary-text-color: #ced4da;
+            --input-bg: #6c757d;
+            --header-bg: #212529;
+            --header-text: #ffffff;
+            --hover-bg: #5a6268;
+            --sent-message-bg: #28a745; /* Darker green for sent messages */
+            --sent-message-text: #ffffff;
+            --received-message-bg: #6c757d; /* Darker grey for received messages */
+            --received-message-text: #ffffff;
+            --ai-message-bg: #ffc107; /* Orange/Yellow for AI messages */
+            --ai-message-text: #000000;
+            --success-color: #28a745; /* Standard Bootstrap success green in dark mode */
+            --success-color-dark: #218838;
+        }
+
+        /* Navbar fixed position and layout */
+        .navbar {
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for fixed navbar */
+            background-color: var(--card-bg); /* Use card background for navbar */
+            z-index: 1030; /* Ensure it stays on top */
+        }
+
+        .navbar .container-fluid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-nav-direct-icons {
+            display: flex;
+            align-items: center;
+            flex-grow: 1; /* Allows it to take up available space */
+            justify-content: space-around; /* Distributes items horizontally with space */
+            padding: 0 10px;
+        }
+
+        .navbar-nav-direct-icons .nav-link {
+            display: flex; /* Make nav-links flex containers too */
+            flex-direction: column; /* Stack icon and potential text vertically (if you add text) */
+            align-items: center;
+            justify-content: center;
+            padding: 8px 10px; /* Adjust padding for better touch targets */
+            font-size: 1rem; /* Base font size */
+            position: relative; /* For badge positioning */
+            color: var(--text-color); /* Ensure link color adapts to theme */
+        }
+        .navbar-nav-direct-icons .nav-link:hover {
+            color: var(--primary-color); /* Hover effect */
+        }
+
+        .navbar-nav-direct-icons .nav-link .badge {
+            position: absolute;
+            top: -5px; /* Adjust as needed */
+            right: -5px; /* Adjust as needed */
+            padding: .3em .6em;
+            border-radius: 50%;
+            background-color: #dc3545; /* Standard Bootstrap danger red for notifications */
+            color: white;
+            font-size: 0.6em;
+        }
+
+        @media (max-width: 768px) {
+            .navbar-nav-direct-icons {
+                gap: 5px; /* Smaller gap on tablets */
+            }
+            .navbar-nav-direct-icons .nav-link {
+                font-size: 1.1rem; /* Slightly larger icons on smaller screens */
+                padding: 3px 5px; /* Smaller padding */
+            }
+        }
+
+        @media (max-width: 576px) {
+            .navbar-nav-direct-icons {
+                gap: 2px; /* Even smaller gap on mobile */
+                padding: 0 2px;
+            }
+            .navbar-nav-direct-icons .nav-link {
+                font-size: 0.9rem; /* Smaller icons on very small screens */
+                padding: 2px 4px;
+            }
+        }
+
+        /* Main content wrapper to offset fixed navbar */
+        .main-content-wrapper {
+            padding-top: 70px; /* Adjust this value if your navbar height changes */
+            flex-grow: 1; /* Allow content to expand vertically */
+        }
+
+        /* Flash message container (fixed position within main-content-wrapper) */
+        .alert-container {
+            position: fixed;
+            top: 70px; /* Below the navbar */
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            z-index: 1050; /* Above other content */
+            text-align: center;
+            padding-top: 10px;
+        }
+
+        .alert.flash {
+            margin-bottom: 10px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 5px;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+
+        /* Modal styling */
+        .modal-body, .modal-header, .modal-footer {
+            color: var(--text-color);
+            background-color: var(--card-bg);
+        }
+        .modal-body p, .modal-body label, .modal-body small {
+            color: var(--text-color);
+        }
+        .modal { z-index: 1050; }
+        .modal-backdrop { z-index: 1040; }
+
+
+        /* Footer styling */
+        .footer {
+            flex-shrink: 0; /* Don't shrink footer */
+            padding: 15px 0;
+            background-color: var(--card-bg); /* Use card background for footer */
+            color: var(--secondary-text-color);
+            text-align: center;
+            border-top: 1px solid var(--card-border); /* Use card border variable */
+            margin-top: auto; /* Push footer to the bottom */
+        }
+    </style>
+</head>
+<body class="{{ g.user_theme if g.user_theme else 'light' }}-theme">
+
+    <nav class="navbar navbar-expand-lg fixed-top"> {# Added fixed-top here #}
+        <div class="container-fluid">
+            {# Left-aligned Home button #}
+            <a class="navbar-brand" href="{{ url_for('home') }}">Home</a>
+
+            {# All direct navigation icons #}
+            {% if current_user.is_authenticated %}
+            <div class="navbar-nav-direct-icons">
+                <a class="nav-link" href="{{ url_for('inbox') }}" title="Messages">
+                    <i class="fas fa-comments"></i>
+                    {# Calculate total inbox notifications for the badge #}
+                    {% set total_inbox_notifications = (g.unread_messages_count | default(0)) + (g.unread_game_invite_count | default(0)) %}
+                    {% if total_inbox_notifications > 0 %}
+                        <span class="badge">{{ total_inbox_notifications }}</span>
+                    {% endif %}
+                </a>
+                <a class="nav-link" href="{{ url_for('members_list') }}" title="Members">
+                    <i class="fas fa-users"></i>
+                </a>
+                <a class="nav-link" href="{{ url_for('status_feed') }}" title="Status">
+                    <i class="fas fa-play-circle"></i>
+                </a>
+                <a class="nav-link" href="{{ url_for('games_hub') }}" title="Games">
+                    <i class="fas fa-gamepad"></i>
+                </a>
+                <a class="nav-link" href="{{ url_for('settings') }}" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </a>
+                <a class="nav-link" href="{{ url_for('my_profile') }}" title="My Profile">
+                    <i class="fas fa-user-circle"></i>
+                </a>
+                {% if current_user.is_admin %}
+                 <a class="nav-link" href="{{ url_for('admin_manage_users') }}" title="Admin Panel">
+                    <i class="fas fa-user-shield"></i>
+                </a>
+                {% endif %}
             </div>
-          ) : (
-            <p>Please log in to use the AI chat.</p>
-          )}
+            {% endif %}
+
         </div>
-      );
-    };
+    </nav>
 
-    ReactDOM.render(<Chat />, document.getElementById('chat-container'));
+    <div class="main-content-wrapper"> {# New wrapper for main content #}
+        <div class="alert-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} flash">{{ message | safe }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        {% block content %}{% endblock %}
+    </div>
 
-    document.getElementById('send-message').addEventListener('click', sendMessage);
-    document.getElementById('chat-input').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
+    {% block footer %}
+    <footer class="footer">
+        <div class="container">
+            <span>© {{ now.year }} SocioFam23. All rights reserved.</span>
+        </div>
+    </footer>
+    {% endblock %}
 
-    document.getElementById('theme-toggle')?.addEventListener('click', () => {
-      const body = document.body;
-      const currentTheme = body.getAttribute('data-theme');
-      body.setAttribute('data-theme', currentTheme === 'light' ? 'dark' : 'light');
-    });
-  </script>
+    <!-- Bootstrap JS Bundle (includes Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Moment.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <!-- Moment.js Locales (optional, for fromNow/calendar) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment/2.29.1/locale/en.min.js"></script>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block scripts %}{% endblock %}
+
+    <script>
+        // Global message box function
+        function showMessageBox(message, type = 'info') {
+            const messageBoxElement = document.getElementById('messageBox');
+            if (!messageBoxElement) {
+                console.error("MessageBox element not found.");
+                return;
+            }
+            const messageBox = new bootstrap.Modal(messageBoxElement);
+            document.getElementById('messageText').textContent = message;
+
+            const modalHeader = messageBoxElement.querySelector('.modal-header');
+            if (modalHeader) {
+                modalHeader.className = 'modal-header'; // Reset classes
+                if (type === 'danger') modalHeader.classList.add('bg-danger', 'text-white');
+                else if (type === 'success') modalHeader.classList.add('bg-success', 'text-white');
+                else modalHeader.classList.add('bg-primary', 'text-white'); // Default
+            }
+            messageBox.show();
+        }
+    </script>
 </body>
 </html>
