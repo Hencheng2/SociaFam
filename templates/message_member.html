@@ -1,105 +1,300 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block title %}Start New Conversation{% endblock %}
 
 {% block content %}
 <style>
-    .fixed-alerts {
+    /* Ensure HTML and Body take full height and manage overflow */
+    html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow: hidden; /* Crucial: Prevents main body scroll */
+    }
+
+    body {
+        display: flex; /* Use flexbox for main body layout */
+        flex-direction: column; /* Stack children vertically */
+        min-height: 100vh; /* Ensure body takes full viewport height */
+        background-color: var(--background-color); /* Match background */
+        color: var(--text-color); /* Match text color */
+    }
+
+    /* Fixed Header Container for this page (Title + Search) */
+    .fixed-message-header {
         position: fixed;
-        top: 60px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: var(--background-color); /* Match page background */
+        color: var(--text-color);
+        padding: 15px 20px;
+        box-shadow: none;
+        border: none;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding-top: 70px; /* Space for the main navbar */
+        padding-bottom: 15px; /* Padding below search input */
+        min-height: 140px; /* Adjusted height for title, description, search */
+    }
+
+    .fixed-message-header h2 {
+        margin-bottom: 5px;
+        font-size: 1.8em;
+    }
+
+    .fixed-message-header p {
+        font-size: 0.9em;
+        color: var(--secondary-text-color);
+        margin-bottom: 15px;
+    }
+
+    /* Main Members List Container (Scrollable) */
+    .messageable-members-list-container {
+        position: fixed; /* Make it fixed */
+        top: 140px; /* Adjusted top to be below the fixed header */
         left: 0;
         right: 0;
-        z-index: 1000;
-        padding: 10px;
+        bottom: 0; /* Extend to the very bottom of the viewport */
+        width: 100%; /* Ensure it spans full width */
+        background-color: var(--background-color); /* Match background */
+        border: none; /* No border */
+        box-shadow: none; /* No shadow */
+        overflow-y: auto; /* THIS MAKES IT SCROLLABLE */
+        box-sizing: border-box;
+        padding: 20px; /* Padding inside the scrollable area */
     }
-    .overflow-auto { max-height: 70vh; }
+
+    /* Member card styling - Reused from members_list.html, ensure consistency */
+    .member-card {
+        background-color: var(--card-background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        margin-bottom: 15px;
+        padding: 15px;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out;
+    }
+
+    .member-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .member-card img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid var(--primary-color);
+        margin-right: 15px;
+    }
+
+    .member-info {
+        flex-grow: 1;
+    }
+
+    .member-info h5 {
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: var(--text-color);
+    }
+
+    .member-info p {
+        margin-bottom: 0;
+        color: var(--secondary-text-color);
+        font-size: 0.9em;
+    }
+
+    .member-actions .btn {
+        padding: 8px 15px;
+        font-size: 0.9em;
+        border-radius: 8px;
+        transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+    }
 </style>
 
-<!-- Fixed Alerts Container -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div class="fixed-alerts">
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message | safe }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        </div>
-    {% endif %}
-{% endwith %}
-
-<!-- Fixed Header Container -->
-<div class="container mt-5 position-sticky top-0 bg-white shadow-sm p-3">
-    <h1 class="text-center mb-4">Start New Conversation</h1>
-    <p class="text-center text-muted">Choose user to start a new conversation.</p>
-    <form method="POST" id="search-form">
-        {{ form.hidden_tag() }}
-        <div class="text-center">
-            <input type="text" class="form-control" id="search-input" name="search_query" placeholder="Search members...">
-        </div>
-    </form>
-</div>
-
-<!-- Main Members List Container -->
-<div class="container mt-5 position-relative overflow-auto">
-    <!-- Fixed AI List Item -->
-    <div class="list-group-item list-group-item-action d-flex align-items-center">
-        <img src="{{ url_for('static', filename='images/ai-icon.png') }}" class="rounded-circle me-2" style="width: 40px; height: 40px;" alt="AI profile icon">
-        <div class="ms-2">
-            <strong>Admin</strong>
-            <small>(@AdminAI)</small>
-            <a href="{{ url_for('ai_chat') }}" class="btn btn-primary btn-sm ms-2">Message</a>
-        </div>
-    </div>
-
-    <!-- Members List -->
-    <div class="list-group" id="members-list">
-        {% if messageable_members and messageable_members|length > 0 %}
-            {% for member in messageable_members %}
-                <div class="list-group-item list-group-item-action d-flex align-items-center">
-                    <img src="{{ url_for('static', filename=member.profilePhoto if member.profilePhoto else 'images/default-profile.png') }}" class="rounded-circle me-2" style="width: 40px; height: 40px;" alt="Profile photo">
-                    <div class="ms-2">
-                        <strong>{{ member.fullName }}</strong>
-                        <a href="{{ url_for('send_message', recipient_id=member.id) }}" class="btn btn-primary btn-sm ms-2">Message</a>
-                    </div>
-                </div>
-            {% endfor %}
-        {% else %}
-            <p class="text-center text-muted">No users found who can be messaged.</p>
-        {% endif %}
+<div class="fixed-message-header">
+    <h2 class="text-center">Start a New Conversation</h2>
+    <p class="text-muted">Select a member to start a direct message chat.</p>
+    <div class="input-group">
+        <input type="text" id="memberSearch" class="form-control" placeholder="Search members...">
     </div>
 </div>
+
+<div class="messageable-members-list-container">
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-container mb-4">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message | safe }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div id="membersList" class="list-group">
+            <!-- Members will be rendered here by JavaScript -->
+        </div>
+    </div>
+</div>
+
+{% set message_with_url_prefix = url_for('message_with', other_user_id=1).replace('1', '') %}
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const searchInput = document.getElementById('search-input');
-        const membersList = document.getElementById('members-list');
+        // This data is passed from Flask and available globally in the template
+        const allMembers = {{ members | tojson | safe }}; // This should be `messageable_members` from Flask
+        const aiUserId = {{ ai_user_id | tojson | safe }}; // Get AI user's ID
+        const currentUserId = {{ current_user.id | tojson | safe }}; // Get current user's ID
 
-        searchInput.addEventListener('input', function() {
-            const query = searchInput.value.toLowerCase();
-            fetch(`{{ url_for('search_members') }}?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(data => {
-                    membersList.innerHTML = '';
-                    if (data.length > 0) {
-                        data.forEach(member => {
-                            const item = document.createElement('div');
-                            item.className = 'list-group-item list-group-item-action d-flex align-items-center';
-                            item.innerHTML = `
-                                <img src="${member.profilePhoto || '{{ url_for('static', filename='images/default-profile.png') }}'}" class="rounded-circle me-2" style="width: 40px; height: 40px;" alt="Profile photo">
-                                <div class="ms-2">
-                                    <strong>${member.fullName}</strong>
-                                    <a href="{{ url_for('send_message', recipient_id='') }}${member.id}" class="btn btn-primary btn-sm ms-2">Message</a>
-                                </div>
-                            `;
-                            membersList.appendChild(item);
-                        });
-                    } else {
-                        membersList.innerHTML = '<p class="text-center text-muted">No users found who can be messaged.</p>';
-                    }
-                })
-                .catch(error => console.error('Error fetching members:', error));
+        const membersListDiv = document.getElementById('membersList');
+        const memberSearchInput = document.getElementById('memberSearch');
+
+        // Generate the base URL for the message_with endpoint using Jinja2 once, then replace the dummy ID
+        // This relies on Flask route being /direct_chat/<int:other_user_id> and endpoint 'message_with'
+        const messageWithBaseUrl = "{{ message_with_url_prefix }}";
+
+
+        function renderMembers(membersToRender) {
+            membersListDiv.innerHTML = ''; // Clear existing list
+            if (membersToRender.length === 0 && !aiUserId) { // If no members AND no AI, show no members found
+                membersListDiv.innerHTML = '<p class="text-center text-muted mt-3">No members found matching your search.</p>';
+                return;
+            }
+
+            // Always add the AI Chat Assistant button first, if AI user ID is available
+            if (aiUserId) {
+                const aiCard = document.createElement('div');
+                aiCard.className = 'member-card';
+                aiCard.innerHTML = `
+                    <img src="{{ url_for('static', filename='img/ai_profile.png') }}" alt="AI Assistant Profile Photo">
+                    <div class="member-info">
+                        <h5>AI Chat Assistant</h5>
+                        <p class="text-muted">Get help with your family tree.</p>
+                    </div>
+                    <div class="member-actions">
+                        <a href="${messageWithBaseUrl}${aiUserId}" class="btn btn-primary">Chat</a>
+                    </div>
+                `;
+                membersListDiv.appendChild(aiCard);
+            }
+
+            membersToRender.forEach(member => {
+                // Ensure it's not the current user, and not the AI user (if present)
+                if (member.user_id && (member.user_id === currentUserId || member.user_id === aiUserId)) {
+                    return; // Skip current user and AI user
+                }
+
+                const memberCard = document.createElement('div');
+                memberCard.className = 'member-card';
+
+                let profilePhotoSrc = member.profilePhotoUrl;
+                if (!profilePhotoSrc) {
+                    profilePhotoSrc = "{{ url_for('static', filename='img/default_profile.png') }}";
+                }
+
+                memberCard.innerHTML = `
+                    <img src="${profilePhotoSrc}" alt="${member.fullName} Profile Photo">
+                    <div class="member-info">
+                        <h5>${member.fullName}</h5>
+                        ${member.username ? `<p class="text-muted">@${member.username}</p>` : ''}
+                    </div>
+                    <div class="member-actions">
+                        <a href="${messageWithBaseUrl}${member.user_id}" class="btn btn-primary">Chat</a>
+                    </div>
+                `;
+                membersListDiv.appendChild(memberCard);
+            });
+        }
+
+        function filterAndSortMembers() {
+            const searchTerm = memberSearchInput.value.toLowerCase().trim();
+            let filteredMembers = allMembers.filter(member => {
+                const fullName = member.fullName ? member.fullName.toLowerCase() : '';
+                const username = member.username ? member.username.toLowerCase() : '';
+                return fullName.includes(searchTerm) || username.includes(searchTerm);
+            });
+
+            // Sort logic (prioritize exact matches, then starts with, then contains, then alphabetical)
+            filteredMembers.sort((a, b) => {
+                const aFullName = a.fullName || '';
+                const bFullName = b.fullName || '';
+                const aUsername = a.username || '';
+                const bUsername = b.username || '';
+
+                const aFullNameExact = aFullName === searchTerm;
+                const bFullNameExact = bFullName === searchTerm;
+                const aUsernameExact = aUsername === searchTerm;
+                const bUsernameExact = bUsername === searchTerm;
+
+                const aFullNameStarts = aFullName.startsWith(searchTerm);
+                const bFullNameStarts = bFullName.startsWith(searchTerm);
+                const aUsernameStarts = aUsername.startsWith(searchTerm);
+                const bUsernameStarts = bUsername.startsWith(searchTerm);
+
+                const aFullNameIncludes = aFullName.includes(searchTerm);
+                const bFullNameIncludes = bFullName.includes(searchTerm);
+                const aUsernameIncludes = aUsername.includes(searchTerm);
+                const bUsernameIncludes = bUsername.includes(searchTerm);
+
+                // Priority 1: Exact match on full name or username
+                if (aFullNameExact && !bFullNameExact) return -1;
+                if (!aFullNameExact && bFullNameExact) return 1;
+                if (aUsernameExact && !bUsernameExact) return -1;
+                if (!aUsernameExact && bUsernameExact) return 1;
+
+                // Priority 2: Starts with on full name or username
+                if (aFullNameStarts && !bFullNameStarts) return -1;
+                if (!aFullNameStarts && bFullNameStarts) return 1;
+                if (aUsernameStarts && !bUsernameStarts) return -1;
+                if (!aUsernameStarts && bUsernameStarts) return 1;
+
+                // Priority 3: Full name contains
+                if (aFullNameIncludes && !bFullNameIncludes) return -1;
+                if (!aFullNameIncludes && bFullNameIncludes) return 1;
+
+                // Priority 4: Username contains
+                if (aUsernameIncludes && !bUsernameIncludes) return -1;
+                if (!aUsernameIncludes && bUsernameIncludes) return 1;
+
+                // Default: alphabetical by full name if no other criteria differentiate
+                return aFullName.localeCompare(bFullName);
+            });
+
+            renderMembers(filteredMembers);
+        }
+
+        // Event listener for input changes in the search box
+        memberSearchInput.addEventListener('input', filterAndSortMembers);
+
+        // Initial render of all members when the page loads
+        // Sort initially by full name
+        const sortedInitialMembers = [...allMembers].sort((a, b) => {
+            const aFullName = a.fullName || '';
+            const bFullName = b.fullName || '';
+            return aFullName.localeCompare(bFullName);
+        });
+        renderMembers(sortedInitialMembers);
+
+        // Auto-hide flash messages (copied from base.html for consistency)
+        const flashMessages = document.querySelectorAll('.alert-container .alert');
+        flashMessages.forEach(function(flash) {
+            setTimeout(function() {
+                flash.style.opacity = '0';
+                flash.style.transition = 'opacity 0.5s ease-out';
+                setTimeout(function() {
+                    flash.remove();
+                }, 500);
+            }, 5000);
         });
     });
 </script>
