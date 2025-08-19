@@ -6,10 +6,12 @@ import string
 import json
 import uuid # Import uuid for generating unique IDs
 
-# Assuming these are set up if you're using Google Gemini API
+import gevent
+from gevent import monkey
+monkey.patch_all() # Must be called as early as possible after imports
+
 import google.generativeai as genai
 
-# Assuming these are set up if you're using Firebase for chat background storage
 import firebase_admin
 from firebase_admin import credentials, initialize_app, firestore
 
@@ -23,10 +25,6 @@ from flask_moment import Moment # Make sure this is imported
 
 import config # Assuming config.py exists for SECRET_KEY
 
-# Gevent imports for SocketIO on PythonAnywhere
-import gevent
-from gevent import monkey
-monkey.patch_all() # Must be called as early as possible after imports
 
 # Flask-SocketIO imports
 from flask_socketio import SocketIO, emit, join_room, leave_room
