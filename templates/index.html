@@ -1,20 +1,26 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
 {% block title %}Home{% endblock %}
 
 {% block content %}
-<div class="container text-center mt-5">
-    {% if current_user.is_authenticated %}
-        <!-- Authenticated User Content -->
-        <h1>Welcome, {{ current_user.username }}!</h1>
-        <p class="lead">Explore your social network and connect with your friends.</p>
-        {% if member %}
-            <p>Your profile: {{ member.fullName }}.</p>
+<div class="container-fluid d-flex flex-column align-items-center justify-content-center text-white text-center" style="min-height: calc(100vh - 70px - 60px); background-image: url('{{ background_image }}'); background-size: cover; background-position: center; background-attachment: fixed; position: relative;">
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1;"></div>
+    <div class="position-relative z-index-2 p-4 rounded" style="background-color: rgba(0, 0, 0, 0.6);">
+        {% if current_user.is_authenticated %}
+            <h1 class="display-4 mb-3">Welcome, {{ current_user.username }}!</h1>
+            <p class="lead mb-4">Explore your social network and connect with your friends.</p>
+
+            {% if member %}
+                <p class="lead">Your profile: <strong>{{ member.fullName }}</strong></p>
+            {% endif %}
+        
+            
+        {% else %}
+            <h1 class="display-4 mb-3">Welcome to the SociaFam23</h1>
+            <p class="lead mb-4">Connect with your friends and share memories.</p>
+            <a href="{{ url_for('login') }}" class="btn btn-lg btn-primary me-2">Login</a>
+            <a href="{{ url_for('register') }}" class="btn btn-lg btn-secondary">Register</a>
         {% endif %}
-    {% else %}
-        <!-- Unauthenticated User Content -->
-        <h1>Welcome to SociaFam!</h1>
-        <p class="lead">Join our community to connect with friends and enjoy games.</p>
-    {% endif %}
+    </div>
 </div>
 {% endblock %}
