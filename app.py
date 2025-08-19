@@ -521,7 +521,7 @@ def get_unread_game_invite_count():
     # Counts pending game invitations for the current user from Firestore
     if current_user.is_authenticated and firestore_db:
         try:
-            games_ref = firestore_db.collection(f'artifacts/{config.CANVAS_APP_ID}/public/games')
+            games_ref = firestore_db.collection(f'artifacts/{config.CANVAS_APP_ID}/public/data/games')
 
             # Count games where current user is playerWhiteId and game is not over
             invites_as_white_query = games_ref.where('playerWhiteId', '==', str(current_user.id)).where('gameOver', '==', False).where('gameType', '==', 'human_vs_human')
@@ -1304,12 +1304,13 @@ def admin_manage_users():
 
                 # Delete game documents from Firestore where this user is player
                 if firestore_db:
-                    games_ref = firestore_db.collection(f'artifacts/{config.CANVAS_APP_ID}/public/games')
+                    games_ref = firestore_db.collection(f'artifacts/{config.CANVAS_APP_ID}/public/data/games')
                     games_as_white = games_ref.where('playerWhiteId', '==', user_id_to_delete).stream()
                     for game_doc in games_as_white:
                         game_doc.reference.delete()
                         print(f"Deleted Firestore game {game_doc.id} (user was white).")
 
+                    games_ref = firestore_db.collection(f'artifacts/{config.CANVAS_APP_ID}/public/data/games')
                     games_as_black = games_ref.where('playerBlackId', '==', user_id_to_delete).stream()
                     for game_doc in games_as_black:
                         game_doc.reference.delete()
